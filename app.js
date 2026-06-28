@@ -36,6 +36,12 @@ let lastResults = null;
 /** @type {string|null} */
 let activeMatchResultTab = null;
 
+/** @type {Set<string>} */
+const sectionTouched = new Set();
+
+/** @type {Set<string>} */
+const matchTouched = new Set();
+
 function init() {
   if (!matches.length) matches.push(createMatch(0, 1));
   document.querySelectorAll('.lang-btn').forEach((btn) => {
@@ -45,6 +51,7 @@ function init() {
   renderGroupList();
   renderAll();
   bindEvents();
+  applySectionStates();
 }
 
 function onLangChange() {
@@ -68,8 +75,39 @@ function createMatch(homeIdx, awayIdx) {
     strategy: 'manual',
     scoreLines: [],
     outcomeSnap: {},
-    collapsed: false,
+    collapsed: true,
   };
+}
+
+function touchSection(key) {
+  if (!key) return;
+  sectionTouched.add(key);
+  const el = document.querySelector(`[data-section="${key}"]`);
+  if (!el) return;
+  el.classList.remove('collapsed');
+  el.querySelector('.section-toggle')?.setAttribute('aria-expanded', 'true');
+}
+
+function touchMatch(id) {
+  if (!id) return;
+  matchTouched.add(id);
+  touchSection('matches');
+  const m = matches.find((x) => x.id === id);
+  if (m) m.collapsed = false;
+  const card = document.querySelector(`[data-match-id="${id}"]`);
+  if (card) {
+    card.classList.remove('collapsed');
+    card.querySelector('[data-toggle-match]')?.setAttribute('aria-expanded', 'true');
+  }
+}
+
+function applySectionStates() {
+  document.querySelectorAll('[data-section]').forEach((el) => {
+    if (!sectionTouched.has(el.dataset.section)) {
+      el.classList.add('collapsed');
+      el.querySelector('.section-toggle')?.setAttribute('aria-expanded', 'false');
+    }
+  });
 }
 
 function bindEvents() {
@@ -83,6 +121,7 @@ function bindEvents() {
   });
 
   $('addMatch').addEventListener('click', () => {
+    touchSection('matches');
     matches.push(createMatch(matches.length, matches.length + 1));
     if (useGroupPool()) rebalancePoolAllocEqual();
     renderAll();
@@ -91,7 +130,10 @@ function bindEvents() {
   $('reset').addEventListener('click', resetAll);
 
   $('saveMember').addEventListener('click', addMember);
-  $('addMember').addEventListener('click', () => $('memberName').focus());
+  $('addMember').addEventListener('click', () => {
+    touchSection('group');
+    $('memberName').focus();
+  });
   $('memberName').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addMember();
   });
@@ -107,12 +149,35 @@ function bindEvents() {
 
   $('groupResults')?.querySelector('.group-tabs')?.addEventListener('click', (e) => {
     const tab = e.target.closest('[data-group-tab]');
-    if (tab) setGroupTab(tab.dataset.groupTab);
+    if (tab) {
+      touchSection('groupResults');
+      setGroupTab(tab.dataset.groupTab);
+    }
   });
 
   $('matchResults')?.addEventListener('click', (e) => {
     const tab = e.target.closest('[data-match-result-tab]');
-    if (tab) setMatchResultTab(tab.dataset.matchResultTab);
+    if (tab) {
+      touchSection('matchResults');
+      setMatchResultTab(tab.dataset.matchResultTab);
+    }
+  });
+
+  document.querySelector('.page')?.addEventListener('click', (e) => {
+    const toggle = e.target.closest('.section-toggle');
+    if (!toggle) return;
+    const section = toggle.closest('.collapsible-section');
+    if (!section) return;
+    const collapsed = section.classList.toggle('collapsed');
+    toggle.setAttribute('aria-expanded', String(!collapsed));
+    if (!collapsed) sectionTouched.add(section.dataset.section);
+  });
+
+  document.querySelector('.page')?.addEventListener('focusin', (e) => {
+    const section = e.target.closest('[data-section]');
+    if (section && !e.target.closest('.section-toggle')) touchSection(section.dataset.section);
+    const card = e.target.closest('.match-card');
+    if (card) touchMatch(card.dataset.matchId);
   });
 
   $('matchList').addEventListener('click', (e) => {
@@ -122,6 +187,7 @@ function bindEvents() {
       const card = document.querySelector(`[data-match-id="${toggle.dataset.toggleMatch}"]`);
       if (!m || !card) return;
       m.collapsed = !m.collapsed;
+      if (!m.collapsed) matchTouched.add(m.id);
       card.classList.toggle('collapsed', m.collapsed);
       toggle.setAttribute('aria-expanded', String(!m.collapsed));
       return;
@@ -139,16 +205,22 @@ function bindEvents() {
       return;
     }
     const addScore = e.target.closest('[data-add-score]');
-    if (addScore) addScoreLine(addScore.dataset.addScore);
+    if (addScore) {
+      touchMatch(addScore.dataset.addScore);
+      addScoreLine(addScore.dataset.addScore);
+    }
   });
 
   $('matchList').addEventListener('change', (e) => {
     const row = e.target.closest('.outcome-row');
     if (e.target.type === 'checkbox' && row) {
+      const card = e.target.closest('.match-card');
+      if (card) touchMatch(card.dataset.matchId);
       row.classList.toggle('active', e.target.checked);
       return;
     }
     const card = e.target.closest('.match-card');
+    if (card) touchMatch(card.dataset.matchId);
     if (!card) return;
     const m = matches.find((x) => x.id === card.dataset.matchId);
     if (!m) return;
@@ -178,6 +250,7 @@ function bindEvents() {
   $('matchList').addEventListener('input', (e) => {
     const card = e.target.closest('.match-card');
     if (!card) return;
+    touchMatch(card.dataset.matchId);
     const m = matches.find((x) => x.id === card.dataset.matchId);
     if (!m) return;
     if (e.target.classList.contains('match-pool-alloc')) {
@@ -203,6 +276,7 @@ function addMember() {
   if (!contribution || contribution <= 0) return alert(t('errMemberContrib'));
   groupMembers.push({ id: `g-${Date.now()}`, name, contribution });
   $('memberName').value = '';
+  touchSection('group');
   if (groupMembers.length === 1 || Math.abs(totalPoolAlloc() - 100) > 0.01) rebalancePoolAllocEqual();
   renderGroupList();
   renderAll();
@@ -340,7 +414,7 @@ function renderAll() {
     const card = document.querySelector(`[data-match-id="${m.id}"]`);
     if (card) {
       m.outcomeSnap = snapshotMatch(card);
-      m.collapsed = card.classList.contains('collapsed');
+      m.collapsed = matchTouched.has(m.id) ? card.classList.contains('collapsed') : true;
       const allocInp = card.querySelector('.match-pool-alloc');
       if (allocInp) m.poolAllocPct = parseFloat(allocInp.value) || m.poolAllocPct;
       const budgetInp = card.querySelector('.match-budget');
@@ -805,11 +879,18 @@ function renderMatchResults(results) {
     </div>`;
   }).join('');
 
-  root.innerHTML = `<section class="card card-wide results match-results-wrap">
-    <h2 data-i18n="matchResultsTitle">Per-match Results</h2>
+  root.innerHTML = `<section class="card card-wide results match-results-wrap collapsible-section collapsed" data-section="matchResults">
+    <button type="button" class="section-toggle" aria-expanded="false">
+      <span class="chevron" aria-hidden="true"></span>
+      <h2 data-i18n="matchResultsTitle">Per-match Results</h2>
+    </button>
+    <div class="section-body">
     ${multi ? `<div class="group-tabs match-result-tabs" role="tablist" aria-label="${t('matchResultsTitle')}">${tabs}</div>` : ''}
     <div class="group-tab-panels match-result-panels">${panels}</div>
+    </div>
   </section>`;
+
+  if (sectionTouched.has('matchResults')) touchSection('matchResults');
 
   results.forEach((r) => {
     const el = root.querySelector(`[data-match-viz="${r.match.id}"]`);
@@ -878,6 +959,7 @@ function renderCombinedResults(results) {
 
   $('combinedResults').classList.remove('hidden');
   renderGroupSplit(grandStake, grandMin, grandMax);
+  applySectionStates();
   $('combinedResults').scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
 }
 
@@ -1220,6 +1302,8 @@ function renderGroupSplit(grandStake, grandMin, grandMax) {
 }
 
 function resetAll() {
+  sectionTouched.clear();
+  matchTouched.clear();
   matches = [createMatch(0, 1)];
   lastResults = null;
   renderAll();
@@ -1229,6 +1313,7 @@ function resetAll() {
   activeMatchResultTab = null;
   clearVizEl($('combinedCharts'));
   clearVizEl($('groupCharts'));
+  applySectionStates();
 }
 
 // ponytail: dutch self-check

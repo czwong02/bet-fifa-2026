@@ -135,15 +135,23 @@
 
     <main class="grid">
 
-      <section class="card card-wide" id="groupSection">
+      <section class="card card-wide collapsible-section collapsed" id="groupSection" data-section="group">
 
-        <div class="toolbar-row">
+        <div class="section-head">
 
-          <h2 data-i18n="groupPool">Group Pool</h2>
+          <button type="button" class="section-toggle" aria-expanded="false">
 
-          <button type="button" class="btn btn-secondary" id="addMember" data-i18n="addMember">+ Add member</button>
+            <span class="chevron" aria-hidden="true"></span>
+
+            <h2 data-i18n="groupPool">Group Pool</h2>
+
+          </button>
+
+          <button type="button" class="btn btn-secondary btn-sm" id="addMember" data-i18n="addMember">+ Add member</button>
 
         </div>
+
+        <div class="section-body">
 
         <p class="card-desc" data-i18n="groupDesc">Add people who share the bet. Stakes and profits are split by each member's contribution.</p>
 
@@ -163,27 +171,37 @@
 
         <div class="hidden" id="poolAllocSummary"></div>
 
+        </div>
+
       </section>
 
 
 
-      <section class="card card-wide match-toolbar">
+      <section class="card card-wide collapsible-section collapsed" id="matchesSection" data-section="matches">
 
-        <div class="toolbar-row">
+        <div class="section-head">
 
-          <h2 data-i18n="yourMatches">Your Matches</h2>
+          <button type="button" class="section-toggle" aria-expanded="false">
 
-          <button type="button" class="btn btn-secondary" id="addMatch" data-i18n="addMatch">+ Add match</button>
+            <span class="chevron" aria-hidden="true"></span>
+
+            <h2 data-i18n="yourMatches">Your Matches</h2>
+
+          </button>
+
+          <button type="button" class="btn btn-secondary btn-sm" id="addMatch" data-i18n="addMatch">+ Add match</button>
 
         </div>
 
+        <div class="section-body">
+
         <p class="card-desc" data-i18n-html="toolbarDesc">Configure each match below. Use <strong>Calculate all</strong> to see per-match and combined totals.</p>
 
+        <div id="matchList" class="match-list-inner"></div>
+
+        </div>
+
       </section>
-
-
-
-      <div id="matchList" class="match-list"></div>
 
 
 
@@ -197,9 +215,17 @@
 
 
 
-      <section class="card card-wide results hidden" id="combinedResults">
+      <section class="card card-wide results hidden collapsible-section collapsed" id="combinedResults" data-section="combined">
 
-        <h2 data-i18n="combinedTotals">Combined Totals</h2>
+        <button type="button" class="section-toggle" aria-expanded="false">
+
+          <span class="chevron" aria-hidden="true"></span>
+
+          <h2 data-i18n="combinedTotals">Combined Totals</h2>
+
+        </button>
+
+        <div class="section-body">
 
         <div class="summary" id="combinedSummary"></div>
 
@@ -237,13 +263,23 @@
 
         </div>
 
+        </div>
+
       </section>
 
 
 
-      <section class="card card-wide results hidden" id="groupResults">
+      <section class="card card-wide results hidden collapsible-section collapsed" id="groupResults" data-section="groupResults">
 
-        <h2 data-i18n="groupSplit">Group Split</h2>
+        <button type="button" class="section-toggle" aria-expanded="false">
+
+          <span class="chevron" aria-hidden="true"></span>
+
+          <h2 data-i18n="groupSplit">Group Split</h2>
+
+        </button>
+
+        <div class="section-body">
 
         <div class="group-tabs" role="tablist" aria-label="Group split views">
 
@@ -304,6 +340,8 @@
             <div class="group-earn-grid" id="groupEarnCards"></div>
 
           </div>
+
+        </div>
 
         </div>
 

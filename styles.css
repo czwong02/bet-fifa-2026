@@ -1495,6 +1495,71 @@ body.ref-open { overflow: hidden; }
 
 .match-list { display: contents; }
 
+.match-list-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.collapsible-section .section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0;
+}
+
+.collapsible-section:not(.collapsed) .section-head {
+  margin-bottom: 0.75rem;
+}
+
+.collapsible-section:not(.collapsed) > .section-toggle {
+  margin-bottom: 0.75rem;
+}
+
+.section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  min-width: 0;
+}
+
+.section-toggle h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.collapsible-section.collapsed .chevron {
+  transform: rotate(-45deg);
+  margin-top: 0.15rem;
+}
+
+.section-body {
+  overflow: hidden;
+  transition: max-height 0.25s ease, opacity 0.2s;
+  max-height: 8000px;
+  opacity: 1;
+}
+
+.collapsible-section.collapsed .section-body {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+}
+
 .match-toolbar .toolbar-row {
   display: flex;
   align-items: center;
