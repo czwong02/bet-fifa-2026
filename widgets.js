@@ -1,26 +1,27 @@
 /** Match reference — reads cached data from /api/sports-data (no client API key) */
 
-const REF_COLLAPSED_STORAGE = 'ref-collapsed';
-
 function initReference() {
-  const collapsed = localStorage.getItem(REF_COLLAPSED_STORAGE) === '1';
-  setRefCollapsed(collapsed);
-
-  document.getElementById('toggleRef')?.addEventListener('click', () => {
-    const hidden = document.getElementById('refWidgets')?.classList.contains('hidden');
-    setRefCollapsed(!hidden);
+  document.getElementById('openRef')?.addEventListener('click', () => openRefPanel(true));
+  document.getElementById('closeRef')?.addEventListener('click', () => openRefPanel(false));
+  document.getElementById('refOverlay')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('refOverlay')) openRefPanel(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('refOverlay')?.classList.contains('hidden')) {
+      openRefPanel(false);
+    }
   });
 
   loadReferenceData();
 }
 
-function setRefCollapsed(collapsed) {
-  const panel = document.getElementById('refWidgets');
-  const btn = document.getElementById('toggleRef');
-  if (!panel || !btn) return;
-  panel.classList.toggle('hidden', collapsed);
-  localStorage.setItem(REF_COLLAPSED_STORAGE, collapsed ? '1' : '0');
-  btn.textContent = typeof t === 'function' ? t(collapsed ? 'refShow' : 'refHide') : (collapsed ? 'Show' : 'Hide');
+function openRefPanel(show) {
+  const overlay = document.getElementById('refOverlay');
+  if (!overlay) return;
+  overlay.classList.toggle('hidden', !show);
+  overlay.setAttribute('aria-hidden', String(!show));
+  document.body.classList.toggle('ref-open', show);
+  if (show) document.getElementById('closeRef')?.focus();
 }
 
 async function loadReferenceData() {
@@ -127,6 +128,7 @@ function renderStandings(el, leagueStandings) {
     const label = group[0]?.group || `Group ${gi + 1}`;
     return `<div class="ref-standings-group">
       <h4>${escapeHtml(label)}</h4>
+      <div class="table-wrap ref-table-wrap">
       <table class="ref-table">
         <thead><tr>
           <th>#</th><th>${typeof t === 'function' ? t('refTeam') : 'Team'}</th>
@@ -135,6 +137,7 @@ function renderStandings(el, leagueStandings) {
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
+      </div>
     </div>`;
   }).join('');
 }
@@ -149,6 +152,7 @@ function applyTeamsToFirstMatch(home, away) {
   if (TEAMS.includes(h)) m.homeTeam = h;
   if (TEAMS.includes(a)) m.awayTeam = a;
   renderAll();
+  openRefPanel(false);
   document.getElementById('matchList')?.scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -161,9 +165,6 @@ function escapeAttr(s) {
 }
 
 function onWidgetLangChange() {
-  const btn = document.getElementById('toggleRef');
-  const collapsed = document.getElementById('refWidgets')?.classList.contains('hidden');
-  if (btn && typeof t === 'function') btn.textContent = t(collapsed ? 'refShow' : 'refHide');
   loadReferenceData();
 }
 

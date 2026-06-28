@@ -25,6 +25,8 @@
 
   <div class="top-bar">
 
+    <button type="button" class="ref-btn" id="openRef" data-i18n-attr="aria-label:openRef" data-i18n="refBtn">Reference</button>
+
     <div class="lang-switch" role="group" aria-label="Language">
 
       <button type="button" class="lang-btn active" data-lang="en">EN</button>
@@ -34,6 +36,64 @@
     </div>
 
     <button type="button" class="guide-btn" id="openGuide" data-i18n-attr="aria-label:openGuide" data-i18n="guideBtn">Guide</button>
+
+  </div>
+
+
+
+  <div class="ref-overlay hidden" id="refOverlay" aria-hidden="true">
+
+    <aside class="ref-panel" role="dialog" aria-labelledby="refPanelTitle">
+
+      <div class="ref-panel-header">
+
+        <h2 id="refPanelTitle" data-i18n="matchReference">Match Reference</h2>
+
+        <button type="button" class="ref-close" id="closeRef" data-i18n-attr="aria-label:closeRef">×</button>
+
+      </div>
+
+      <div class="ref-panel-body">
+
+        <p class="card-desc" data-i18n="refDesc">Fixtures and standings refresh once daily on the server. Click a match to fill teams in the calculator.</p>
+
+        <p class="hint ref-meta" id="refMeta"></p>
+
+        <div id="refWidgets" class="ref-widgets">
+
+          <div class="ref-grid">
+
+            <div class="ref-pane">
+
+              <div class="ref-pane-label" data-i18n="refLeagues">League</div>
+
+              <div class="ref-pane-body" id="refLeague"></div>
+
+            </div>
+
+            <div class="ref-pane">
+
+              <div class="ref-pane-label" data-i18n="refFixtures">Fixtures</div>
+
+              <div class="ref-pane-body ref-scroll" id="refFixtures"></div>
+
+            </div>
+
+            <div class="ref-pane">
+
+              <div class="ref-pane-label" data-i18n="refStandings">Standings</div>
+
+              <div class="ref-pane-body ref-scroll" id="refStandings"></div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </aside>
 
   </div>
 
@@ -74,56 +134,6 @@
 
 
     <main class="grid">
-
-      <section class="card card-wide" id="refSection">
-
-        <div class="toolbar-row">
-
-          <h2 data-i18n="matchReference">Match Reference</h2>
-
-          <button type="button" class="btn btn-secondary" id="toggleRef" data-i18n="refHide">Hide reference</button>
-
-        </div>
-
-        <p class="card-desc" data-i18n="refDesc">Fixtures and standings refresh once daily on the server. Click a match to fill teams in the calculator.</p>
-
-        <p class="hint ref-meta" id="refMeta"></p>
-
-        <div id="refWidgets" class="ref-widgets">
-
-          <div class="ref-grid">
-
-            <div class="ref-pane">
-
-              <div class="ref-pane-label" data-i18n="refLeagues">League</div>
-
-              <div class="ref-pane-body" id="refLeague"></div>
-
-            </div>
-
-            <div class="ref-pane">
-
-              <div class="ref-pane-label" data-i18n="refFixtures">Fixtures</div>
-
-              <div class="ref-pane-body ref-scroll" id="refFixtures"></div>
-
-            </div>
-
-            <div class="ref-pane">
-
-              <div class="ref-pane-label" data-i18n="refStandings">Standings</div>
-
-              <div class="ref-pane-body ref-scroll" id="refStandings"></div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
 
       <section class="card card-wide" id="groupSection">
 
@@ -193,9 +203,11 @@
 
         <div class="summary" id="combinedSummary"></div>
 
-        <div class="table-wrap">
+        <div class="result-viz combined-viz" id="combinedCharts" aria-hidden="true"></div>
 
-          <table class="stakes-table">
+        <div class="table-wrap table-cards combined-table-wrap">
+
+          <table class="stakes-table combined-table">
 
             <thead>
 
@@ -233,39 +245,67 @@
 
         <h2 data-i18n="groupSplit">Group Split</h2>
 
-        <div class="table-wrap">
+        <div class="group-tabs" role="tablist" aria-label="Group split views">
 
-          <table class="stakes-table">
+          <button type="button" class="group-tab active" role="tab" id="groupTabCharts" data-group-tab="charts" data-i18n="groupTabCharts" aria-selected="true" aria-controls="groupPanelCharts">Charts</button>
 
-            <thead>
+          <button type="button" class="group-tab" role="tab" id="groupTabTable" data-group-tab="table" data-i18n="groupTabTable" aria-selected="false" aria-controls="groupPanelTable">Summary</button>
 
-              <tr>
-
-                <th data-i18n="memberName">Name</th>
-
-                <th data-i18n="contribution">Contribution</th>
-
-                <th data-i18n="thStakePct">Share %</th>
-
-                <th data-i18n="shareOfStake">Share of stake</th>
-
-                <th data-i18n="profitEarned">Profit earned</th>
-
-                <th data-i18n="thProfitRoi">Profit ROI</th>
-
-                <th data-i18n="totalPayout">Total payout</th>
-
-              </tr>
-
-            </thead>
-
-            <tbody id="groupBody"></tbody>
-
-          </table>
+          <button type="button" class="group-tab" role="tab" id="groupTabMembers" data-group-tab="members" data-i18n="groupTabMembers" aria-selected="false" aria-controls="groupPanelMembers">Members</button>
 
         </div>
 
-        <div class="group-earn-grid" id="groupEarnCards"></div>
+        <div class="group-tab-panels">
+
+          <div class="group-tab-panel active" role="tabpanel" id="groupPanelCharts" data-group-panel="charts" aria-labelledby="groupTabCharts">
+
+            <div class="result-viz" id="groupCharts" aria-hidden="true"></div>
+
+          </div>
+
+          <div class="group-tab-panel" role="tabpanel" id="groupPanelTable" data-group-panel="table" aria-labelledby="groupTabTable" hidden>
+
+            <div class="table-wrap table-cards">
+
+              <table class="stakes-table">
+
+                <thead>
+
+                  <tr>
+
+                    <th data-i18n="memberName">Name</th>
+
+                    <th data-i18n="contribution">Contribution</th>
+
+                    <th data-i18n="thStakePct">Share %</th>
+
+                    <th data-i18n="shareOfStake">Share of stake</th>
+
+                    <th data-i18n="profitEarned">Profit earned</th>
+
+                    <th data-i18n="thProfitRoi">Profit ROI</th>
+
+                    <th data-i18n="totalPayout">Total payout</th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody id="groupBody"></tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+          <div class="group-tab-panel" role="tabpanel" id="groupPanelMembers" data-group-panel="members" aria-labelledby="groupTabMembers" hidden>
+
+            <div class="group-earn-grid" id="groupEarnCards"></div>
+
+          </div>
+
+        </div>
 
       </section>
 

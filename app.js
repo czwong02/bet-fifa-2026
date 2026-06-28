@@ -33,6 +33,9 @@ const $ = (id) => document.getElementById(id);
 /** @type {Array<object>|null} */
 let lastResults = null;
 
+/** @type {string|null} */
+let activeMatchResultTab = null;
+
 function init() {
   if (!matches.length) matches.push(createMatch(0, 1));
   document.querySelectorAll('.lang-btn').forEach((btn) => {
@@ -102,6 +105,16 @@ function bindEvents() {
     }
   });
 
+  $('groupResults')?.querySelector('.group-tabs')?.addEventListener('click', (e) => {
+    const tab = e.target.closest('[data-group-tab]');
+    if (tab) setGroupTab(tab.dataset.groupTab);
+  });
+
+  $('matchResults')?.addEventListener('click', (e) => {
+    const tab = e.target.closest('[data-match-result-tab]');
+    if (tab) setMatchResultTab(tab.dataset.matchResultTab);
+  });
+
   $('matchList').addEventListener('click', (e) => {
     const toggle = e.target.closest('[data-toggle-match]');
     if (toggle) {
@@ -122,6 +135,7 @@ function bindEvents() {
       $('combinedResults').classList.add('hidden');
       $('groupResults').classList.add('hidden');
       $('matchResults').innerHTML = '';
+      activeMatchResultTab = null;
       return;
     }
     const addScore = e.target.closest('[data-add-score]');
@@ -674,59 +688,140 @@ function calculateAll() {
   renderCombinedResults(results);
 }
 
-function renderMatchResults(results) {
-  $('matchResults').innerHTML = results.map((r) => {
-    const { match: m, bets, totalStake, scenarios, minPL, maxPL } = r;
-    const budget = matchBudget(m);
-    const budgetLeft = budget - totalStake;
-    const invSum = bets.reduce((s, b) => s + 1 / b.odds, 0);
+function setMatchResultTab(matchId) {
+  activeMatchResultTab = matchId;
+  const root = $('matchResults');
+  if (!root) return;
+  root.querySelectorAll('[data-match-result-tab]').forEach((btn) => {
+    const on = btn.dataset.matchResultTab === matchId;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-selected', String(on));
+  });
+  root.querySelectorAll('[data-match-result-panel]').forEach((panel) => {
+    const on = panel.dataset.matchResultPanel === matchId;
+    panel.classList.toggle('active', on);
+    panel.hidden = !on;
+  });
+}
 
-    const rows = bets.map((b) => {
-      const ret = b.stake * b.odds;
-      const prof = ret - totalStake;
-      const stakePct = totalStake > 0 ? b.stake / totalStake : 0;
-      const profitPct = b.stake > 0 ? (ret - b.stake) / b.stake : 0;
-      const roiPct = totalStake > 0 ? prof / totalStake : 0;
-      return `<tr>
-        <td>${b.label}</td>
-        <td>${b.odds.toFixed(2)}</td>
-        <td>${pct(implied(b.odds))}</td>
-        <td>${fmt(b.stake)}</td>
-        <td>${pct(stakePct)}</td>
-        <td>${fmt(ret)}</td>
-        <td class="${prof >= 0 ? 'positive' : 'negative'}">${fmt(prof)}</td>
-        <td class="${prof >= 0 ? 'positive' : 'negative'}">${pct(profitPct)}</td>
-        <td class="${roiPct >= 0 ? 'positive' : 'negative'}">${pct(roiPct)}</td>
-      </tr>`;
-    }).join('');
+function matchResultPanelHtml(r, col) {
+  const { match: m, bets, totalStake, scenarios, minPL, maxPL } = r;
+  const budget = matchBudget(m);
+  const budgetLeft = budget - totalStake;
+  const invSum = bets.reduce((s, b) => s + 1 / b.odds, 0);
 
-    const scenarioHtml = scenarios.map((sc) =>
-      `<div class="scenario ${sc.cls}">
-        <h4>${sc.label}</h4>
-        <p>${t('netPL')} <strong class="${sc.pl >= 0 ? 'positive' : 'negative'}">${fmt(sc.pl)} (${pct(roi(sc.pl, totalStake))})</strong></p>
-      </div>`
-    ).join('');
-
-    return `<section class="card card-wide results">
-      <h2 class="match-result-title">${typeof teamVsHtml === 'function' ? teamVsHtml(m.homeTeam, m.awayTeam) : `${escapeHtml(m.homeTeam)} vs ${escapeHtml(m.awayTeam)}`}</h2>
-      <div class="summary">
-        <div class="stat"><div class="stat-label">${t('staked')}</div><div class="stat-value">${fmt(totalStake)}</div></div>
-        <div class="stat"><div class="stat-label">${t('budgetLeft')}</div><div class="stat-value ${budgetLeft >= 0 ? 'neutral' : 'negative'}">${budget > 0 ? fmt(budgetLeft) : '—'}</div></div>
-        ${useGroupPool() ? `<div class="stat"><div class="stat-label">${t('poolAllocPct')}</div><div class="stat-value">${m.poolAllocPct.toFixed(2)}%</div></div>` : ''}
-        <div class="stat"><div class="stat-label">${t('impliedSum')}</div><div class="stat-value">${pct(invSum)}</div></div>
-        <div class="stat"><div class="stat-label">${t('scenarioPL')}</div><div class="stat-value ${minPL >= 0 ? 'positive' : 'negative'}">${fmt(minPL)} – ${fmt(maxPL)}</div></div>
-        <div class="stat"><div class="stat-label">${t('scenarioRoi')}</div><div class="stat-value">${pct(roi(minPL, totalStake))} – ${pct(roi(maxPL, totalStake))}</div></div>
-      </div>
-      <div class="table-wrap"><table class="stakes-table">
-        <thead><tr>
-          <th>${t('thSelection')}</th><th>${t('odds')}</th><th>${t('thImplied')}</th><th>${t('staked')}</th><th>${t('thStakePct')}</th>
-          <th>${t('thReturn')}</th><th>${t('thProfit')}</th><th>${t('thProfitPct')}</th><th>${t('thRoi')}</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table></div>
-      <div class="scenario-grid">${scenarioHtml}</div>
-    </section>`;
+  const rows = bets.map((b) => {
+    const ret = b.stake * b.odds;
+    const prof = ret - totalStake;
+    const stakePct = totalStake > 0 ? b.stake / totalStake : 0;
+    const profitPct = b.stake > 0 ? (ret - b.stake) / b.stake : 0;
+    const roiPct = totalStake > 0 ? prof / totalStake : 0;
+    return `<tr>
+      <td data-label="${col.selection}">${escapeHtml(b.label)}</td>
+      <td data-label="${col.odds}">${b.odds.toFixed(2)}</td>
+      <td data-label="${col.implied}">${pct(implied(b.odds))}</td>
+      <td data-label="${col.staked}">${fmt(b.stake)}</td>
+      <td data-label="${col.stakePct}">${pct(stakePct)}</td>
+      <td data-label="${col.ret}">${fmt(ret)}</td>
+      <td class="${prof >= 0 ? 'positive' : 'negative'}" data-label="${col.profit}">${fmt(prof)}</td>
+      <td class="${prof >= 0 ? 'positive' : 'negative'}" data-label="${col.profitPct}">${pct(profitPct)}</td>
+      <td class="${roiPct >= 0 ? 'positive' : 'negative'}" data-label="${col.roi}">${pct(roiPct)}</td>
+    </tr>`;
   }).join('');
+
+  const scenarioHtml = scenarios.map((sc) =>
+    `<div class="scenario ${sc.cls}">
+      <h4>${sc.label}</h4>
+      <p>${t('netPL')} <strong class="${sc.pl >= 0 ? 'positive' : 'negative'}">${fmt(sc.pl)} (${pct(roi(sc.pl, totalStake))})</strong></p>
+    </div>`
+  ).join('');
+
+  return `<div class="match-result-panel-inner">
+    <h3 class="match-result-title">${typeof teamVsHtml === 'function' ? teamVsHtml(m.homeTeam, m.awayTeam) : `${escapeHtml(m.homeTeam)} vs ${escapeHtml(m.awayTeam)}`}</h3>
+    <div class="summary">
+      <div class="stat"><div class="stat-label">${t('staked')}</div><div class="stat-value">${fmt(totalStake)}</div></div>
+      <div class="stat"><div class="stat-label">${t('budgetLeft')}</div><div class="stat-value ${budgetLeft >= 0 ? 'neutral' : 'negative'}">${budget > 0 ? fmt(budgetLeft) : '—'}</div></div>
+      ${useGroupPool() ? `<div class="stat"><div class="stat-label">${t('poolAllocPct')}</div><div class="stat-value">${m.poolAllocPct.toFixed(2)}%</div></div>` : ''}
+      <div class="stat"><div class="stat-label">${t('impliedSum')}</div><div class="stat-value">${pct(invSum)}</div></div>
+      <div class="stat"><div class="stat-label">${t('scenarioPL')}</div><div class="stat-value ${minPL >= 0 ? 'positive' : 'negative'}">${fmt(minPL)} – ${fmt(maxPL)}</div></div>
+      <div class="stat"><div class="stat-label">${t('scenarioRoi')}</div><div class="stat-value">${pct(roi(minPL, totalStake))} – ${pct(roi(maxPL, totalStake))}</div></div>
+    </div>
+    <div class="result-viz" data-match-viz="${m.id}"></div>
+    <div class="table-wrap table-cards"><table class="stakes-table">
+      <thead><tr>
+        <th>${t('thSelection')}</th><th>${t('odds')}</th><th>${t('thImplied')}</th><th>${t('staked')}</th><th>${t('thStakePct')}</th>
+        <th>${t('thReturn')}</th><th>${t('thProfit')}</th><th>${t('thProfitPct')}</th><th>${t('thRoi')}</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div class="scenario-grid">${scenarioHtml}</div>
+  </div>`;
+}
+
+function renderMatchResults(results) {
+  const root = $('matchResults');
+  if (!results.length) {
+    root.innerHTML = '';
+    activeMatchResultTab = null;
+    return;
+  }
+
+  const col = {
+    selection: t('thSelection'),
+    odds: t('odds'),
+    implied: t('thImplied'),
+    staked: t('staked'),
+    stakePct: t('thStakePct'),
+    ret: t('thReturn'),
+    profit: t('thProfit'),
+    profitPct: t('thProfitPct'),
+    roi: t('thRoi'),
+  };
+
+  const prevTab = activeMatchResultTab;
+  const multi = results.length > 1;
+  const tabs = multi ? results.map((r, i) => {
+    const m = r.match;
+    const title = `${m.homeTeam} vs ${m.awayTeam}`;
+    const flags = typeof teamFlagImg === 'function'
+      ? `${teamFlagImg(m.homeTeam, 'team-flag team-flag-sm')}<span class="match-tab-vs">vs</span>${teamFlagImg(m.awayTeam, 'team-flag team-flag-sm')}`
+      : '';
+    return `<button type="button" class="group-tab match-result-tab" role="tab"
+      id="matchResultTab-${m.id}" data-match-result-tab="${m.id}"
+      aria-selected="false" aria-controls="matchResultPanel-${m.id}"
+      title="${escapeHtml(title)}">
+      <span class="match-tab-n">${t('matchTab', { n: i + 1 })}</span>
+      <span class="match-tab-teams">${flags}<span class="match-tab-names">${escapeHtml(m.homeTeam)} vs ${escapeHtml(m.awayTeam)}</span></span>
+    </button>`;
+  }).join('') : '';
+
+  const panels = results.map((r, i) => {
+    const m = r.match;
+    const show = !multi || i === 0;
+    return `<div class="group-tab-panel match-result-panel${show ? ' active' : ''}" role="tabpanel"
+      id="matchResultPanel-${m.id}" data-match-result-panel="${m.id}"
+      ${multi ? `aria-labelledby="matchResultTab-${m.id}"` : ''}${show ? '' : ' hidden'}>
+      ${matchResultPanelHtml(r, col)}
+    </div>`;
+  }).join('');
+
+  root.innerHTML = `<section class="card card-wide results match-results-wrap">
+    <h2 data-i18n="matchResultsTitle">Per-match Results</h2>
+    ${multi ? `<div class="group-tabs match-result-tabs" role="tablist" aria-label="${t('matchResultsTitle')}">${tabs}</div>` : ''}
+    <div class="group-tab-panels match-result-panels">${panels}</div>
+  </section>`;
+
+  results.forEach((r) => {
+    const el = root.querySelector(`[data-match-viz="${r.match.id}"]`);
+    if (el) renderMatchCharts(el, r);
+  });
+
+  if (multi) {
+    const activeId = results.some((r) => r.match.id === prevTab) ? prevTab : results[0].match.id;
+    setMatchResultTab(activeId);
+  } else {
+    activeMatchResultTab = results[0].match.id;
+  }
 }
 
 function renderCombinedResults(results) {
@@ -745,33 +840,275 @@ function renderCombinedResults(results) {
     <div class="stat"><div class="stat-label">${t('worstTotalProfit')}</div><div class="stat-value ${grandMin >= 0 ? 'positive' : 'negative'}">${fmt(grandMin)} <span class="stat-sub">(${pct(roi(grandMin, grandStake))})</span></div></div>
   `;
 
+  const col = {
+    match: t('thMatch'),
+    staked: t('thStaked'),
+    stakePct: t('thStakePct'),
+    bestProfit: t('thBestProfit'),
+    bestRoi: t('thBestRoi'),
+    worstProfit: t('thWorstProfit'),
+    worstRoi: t('thWorstRoi'),
+  };
+
+  renderCombinedCharts(results, grandStake, grandMin, grandMax);
+
   $('combinedBody').innerHTML = results.map((r) => {
     const stakePct = grandStake > 0 ? r.totalStake / grandStake : 0;
     const title = typeof teamVsHtml === 'function'
       ? teamVsHtml(r.match.homeTeam, r.match.awayTeam)
       : `${escapeHtml(r.match.homeTeam)} vs ${escapeHtml(r.match.awayTeam)}`;
-    return `<tr>
-      <td>${title}</td>
-      <td>${fmt(r.totalStake)}</td>
-      <td>${pct(stakePct)}</td>
-      <td class="positive">${fmt(r.maxPL)}</td>
-      <td class="positive">${pct(r.maxROI)}</td>
-      <td class="${r.minPL >= 0 ? 'positive' : 'negative'}">${fmt(r.minPL)}</td>
-      <td class="${r.minROI >= 0 ? 'positive' : 'negative'}">${pct(r.minROI)}</td>
+    return `<tr class="combined-row">
+      <td data-label="${col.match}"><span class="combined-match">${title}</span></td>
+      <td data-label="${col.staked}">${fmt(r.totalStake)}</td>
+      <td data-label="${col.stakePct}">${pct(stakePct)}</td>
+      <td class="positive" data-label="${col.bestProfit}">${fmt(r.maxPL)}</td>
+      <td class="positive" data-label="${col.bestRoi}">${pct(r.maxROI)}</td>
+      <td class="${r.minPL >= 0 ? 'positive' : 'negative'}" data-label="${col.worstProfit}">${fmt(r.minPL)}</td>
+      <td class="${r.minROI >= 0 ? 'positive' : 'negative'}" data-label="${col.worstRoi}">${pct(r.minROI)}</td>
     </tr>`;
-  }).join('') + `<tr class="total-row">
-    <td><strong>${t('allMatches')}</strong></td>
-    <td><strong>${fmt(grandStake)}</strong></td>
-    <td><strong>100%</strong></td>
-    <td class="positive"><strong>${fmt(grandMax)}</strong></td>
-    <td class="positive"><strong>${pct(roi(grandMax, grandStake))}</strong></td>
-    <td class="${grandMin >= 0 ? 'positive' : 'negative'}"><strong>${fmt(grandMin)}</strong></td>
-    <td class="${roi(grandMin, grandStake) >= 0 ? 'positive' : 'negative'}"><strong>${pct(roi(grandMin, grandStake))}</strong></td>
+  }).join('') + `<tr class="total-row combined-total-row">
+    <td data-label="${col.match}"><strong>${t('allMatches')}</strong></td>
+    <td data-label="${col.staked}"><strong>${fmt(grandStake)}</strong></td>
+    <td data-label="${col.stakePct}"><strong>100%</strong></td>
+    <td class="positive" data-label="${col.bestProfit}"><strong>${fmt(grandMax)}</strong></td>
+    <td class="positive" data-label="${col.bestRoi}"><strong>${pct(roi(grandMax, grandStake))}</strong></td>
+    <td class="${grandMin >= 0 ? 'positive' : 'negative'}" data-label="${col.worstProfit}"><strong>${fmt(grandMin)}</strong></td>
+    <td class="${roi(grandMin, grandStake) >= 0 ? 'positive' : 'negative'}" data-label="${col.worstRoi}"><strong>${pct(roi(grandMin, grandStake))}</strong></td>
   </tr>`;
 
   $('combinedResults').classList.remove('hidden');
   renderGroupSplit(grandStake, grandMin, grandMax);
-  $('combinedResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('combinedResults').scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+}
+
+const VIZ_COLORS = ['#00e676', '#ffc107', '#c8102e', '#006847', '#69f0ae', '#ff5252', '#8fb5a0', '#00b85c'];
+
+function matchChartLabel(m) {
+  return `${m.homeTeam} vs ${m.awayTeam}`;
+}
+
+function buildDonutSlices(items, total, labelFn, valueFn) {
+  let acc = 0;
+  return items.map((item, i) => {
+    const amount = valueFn(item);
+    const pctVal = total > 0 ? (amount / total) * 100 : 0;
+    const start = acc;
+    acc += pctVal;
+    return {
+      color: VIZ_COLORS[i % VIZ_COLORS.length],
+      start,
+      end: acc,
+      pctVal,
+      label: labelFn(item),
+      amount,
+    };
+  });
+}
+
+function buildRangeInner(min, max) {
+  if (min < 0 && max > 0) {
+    return `<div class="viz-range-worst" style="flex:${Math.abs(min)}"></div>
+      <div class="viz-range-zero" aria-hidden="true"></div>
+      <div class="viz-range-best" style="flex:${max}"></div>`;
+  }
+  if (max > 0) return `<div class="viz-range-best viz-range-only"></div>`;
+  if (min < 0) return `<div class="viz-range-worst viz-range-only"></div>`;
+  return `<div class="viz-range-neutral"></div>`;
+}
+
+function buildDualProfitRows(items, scale) {
+  return items.map((row, i) => {
+    const bestW = (row.best / scale) * 100;
+    const worstW = (Math.abs(row.worst) / scale) * 100;
+    const bestCls = row.best >= 0 ? 'positive' : 'negative';
+    const worstCls = row.worst >= 0 ? 'positive' : 'negative';
+    const color = row.color || VIZ_COLORS[i % VIZ_COLORS.length];
+    return `<div class="viz-profit-row">
+      <span class="viz-profit-label" style="border-left-color:${color}">${escapeHtml(row.label)}</span>
+      <div class="viz-profit-pair">
+        <div class="viz-bar-group">
+          <span class="viz-bar-tag">${t('chartBest')}</span>
+          <div class="viz-track"><div class="viz-fill viz-fill-best ${bestCls}" style="width:${bestW.toFixed(1)}%"></div></div>
+          <span class="viz-bar-amt ${bestCls}">${fmt(row.best)}</span>
+        </div>
+        <div class="viz-bar-group">
+          <span class="viz-bar-tag">${t('chartWorst')}</span>
+          <div class="viz-track"><div class="viz-fill viz-fill-worst ${worstCls}" style="width:${worstW.toFixed(1)}%"></div></div>
+          <span class="viz-bar-amt ${worstCls}">${fmt(row.worst)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildSingleProfitRows(items, scale) {
+  return items.map((row, i) => {
+    const v = row.value;
+    const w = (Math.abs(v) / scale) * 100;
+    const cls = v >= 0 ? 'positive' : 'negative';
+    const color = row.color || VIZ_COLORS[i % VIZ_COLORS.length];
+    return `<div class="viz-profit-row">
+      <span class="viz-profit-label" style="border-left-color:${color}">${escapeHtml(row.label)}</span>
+      <div class="viz-bar-group viz-bar-group-single">
+        <div class="viz-track"><div class="viz-fill ${v >= 0 ? 'viz-fill-best' : 'viz-fill-worst'} ${cls}" style="width:${w.toFixed(1)}%"></div></div>
+        <span class="viz-bar-amt ${cls}">${fmt(v)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function vizBlockHtml(opts) {
+  const {
+    shareTitle, centerValue, centerLabel, shareAria,
+    slices, profitTitle, profitHtml, rangeTitle, rangeMin, rangeMax, rangeHint,
+  } = opts;
+
+  const donutStyle = slices.length
+    ? `background: conic-gradient(${slices.map((s) => `${s.color} ${s.start}% ${s.end}%`).join(', ')});`
+    : 'background: var(--surface2);';
+
+  const legend = slices.map((s) =>
+    `<li class="viz-legend-item">
+      <span class="viz-swatch" style="background:${s.color}"></span>
+      <span class="viz-legend-label">${escapeHtml(s.label)}</span>
+      <span class="viz-legend-val">${pct(s.pctVal / 100)} · ${fmt(s.amount)}</span>
+    </li>`
+  ).join('');
+
+  return `<div class="viz-grid">
+    <div class="viz-panel">
+      <h3 class="viz-title">${shareTitle}</h3>
+      <div class="viz-donut-wrap">
+        <div class="viz-donut" style="${donutStyle}" role="img" aria-label="${shareAria || shareTitle}">
+          <div class="viz-donut-hole">
+            <span class="viz-donut-total">${fmt(centerValue)}</span>
+            <span class="viz-donut-sub">${centerLabel}</span>
+          </div>
+        </div>
+        <ul class="viz-legend">${legend}</ul>
+      </div>
+    </div>
+    <div class="viz-panel viz-panel-wide">
+      <h3 class="viz-title">${profitTitle}</h3>
+      <div class="viz-profit-list">${profitHtml}</div>
+    </div>
+    <div class="viz-panel viz-panel-full">
+      <h3 class="viz-title">${rangeTitle}</h3>
+      <div class="viz-range">
+        <span class="viz-range-end ${rangeMin >= 0 ? 'positive' : 'negative'}">${fmt(rangeMin)}</span>
+        <div class="viz-range-track">${buildRangeInner(rangeMin, rangeMax)}</div>
+        <span class="viz-range-end ${rangeMax >= 0 ? 'positive' : 'negative'}">${fmt(rangeMax)}</span>
+      </div>
+      <p class="hint viz-range-hint">${rangeHint}</p>
+    </div>
+  </div>`;
+}
+
+function renderVizEl(el, html) {
+  if (!el) return;
+  el.innerHTML = html;
+  el.removeAttribute('aria-hidden');
+}
+
+function clearVizEl(el) {
+  if (!el) return;
+  el.innerHTML = '';
+  el.setAttribute('aria-hidden', 'true');
+}
+
+function renderCombinedCharts(results, grandStake, grandMin, grandMax) {
+  const slices = buildDonutSlices(
+    results,
+    grandStake,
+    (r) => matchChartLabel(r.match),
+    (r) => r.totalStake
+  );
+  const scale = Math.max(...results.map((r) => Math.max(r.maxPL, Math.abs(r.minPL))), 1);
+  const profitRows = buildDualProfitRows(
+    results.map((r, i) => ({
+      label: matchChartLabel(r.match),
+      best: r.maxPL,
+      worst: r.minPL,
+      color: VIZ_COLORS[i % VIZ_COLORS.length],
+    })),
+    scale
+  );
+  renderVizEl($('combinedCharts'), vizBlockHtml({
+    shareTitle: t('chartStakeShare'),
+    centerValue: grandStake,
+    centerLabel: t('totalStaked'),
+    slices,
+    profitTitle: t('chartProfitRange'),
+    profitHtml: profitRows,
+    rangeTitle: t('chartTotalRange'),
+    rangeMin: grandMin,
+    rangeMax: grandMax,
+    rangeHint: `${t('worstTotalProfit')} → ${t('bestTotalProfit')}`,
+  }));
+}
+
+function renderGroupCharts(grandStake, grandMin, grandMax) {
+  const pool = poolTotal();
+  const slices = buildDonutSlices(
+    groupMembers,
+    pool,
+    (m) => m.name,
+    (m) => m.contribution
+  );
+  const members = groupMembers.map((m) => {
+    const share = m.contribution / pool;
+    const e = memberEarnings(share, m.contribution, grandMin, grandMax);
+    return { name: m.name, ...e };
+  });
+  const scale = Math.max(...members.map((m) => Math.max(m.bestProfit, Math.abs(m.worstProfit))), 1);
+  const profitRows = buildDualProfitRows(
+    members.map((m, i) => ({
+      label: m.name,
+      best: m.bestProfit,
+      worst: m.worstProfit,
+      color: VIZ_COLORS[i % VIZ_COLORS.length],
+    })),
+    scale
+  );
+  renderVizEl($('groupCharts'), vizBlockHtml({
+    shareTitle: t('chartGroupShare'),
+    centerValue: pool,
+    centerLabel: t('totalPool'),
+    slices,
+    profitTitle: t('chartMemberProfit'),
+    profitHtml: profitRows,
+    rangeTitle: t('chartTotalRange'),
+    rangeMin: grandMin,
+    rangeMax: grandMax,
+    rangeHint: `${t('worstTotalProfit')} → ${t('bestTotalProfit')}`,
+  }));
+}
+
+function renderMatchCharts(el, result) {
+  const { bets, totalStake, scenarios, minPL, maxPL } = result;
+  const slices = buildDonutSlices(
+    bets,
+    totalStake,
+    (b) => b.label,
+    (b) => b.stake
+  );
+  const scale = Math.max(...scenarios.map((s) => Math.abs(s.pl)), 1);
+  const profitRows = buildSingleProfitRows(
+    scenarios.map((s, i) => ({ label: s.label, value: s.pl, color: VIZ_COLORS[i % VIZ_COLORS.length] })),
+    scale
+  );
+  renderVizEl(el, vizBlockHtml({
+    shareTitle: t('chartBetShare'),
+    centerValue: totalStake,
+    centerLabel: t('staked'),
+    slices,
+    profitTitle: t('chartScenarioPL'),
+    profitHtml: profitRows,
+    rangeTitle: t('chartMatchRange'),
+    rangeMin: minPL,
+    rangeMax: maxPL,
+    rangeHint: `${t('scenarioPL')}: ${fmt(minPL)} – ${fmt(maxPL)}`,
+  }));
 }
 
 function memberEarnings(share, contribution, grandMin, grandMax) {
@@ -787,10 +1124,26 @@ function memberEarnings(share, contribution, grandMin, grandMax) {
   };
 }
 
+function setGroupTab(name) {
+  const section = $('groupResults');
+  if (!section) return;
+  section.querySelectorAll('[data-group-tab]').forEach((btn) => {
+    const on = btn.dataset.groupTab === name;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-selected', String(on));
+  });
+  section.querySelectorAll('[data-group-panel]').forEach((panel) => {
+    const on = panel.dataset.groupPanel === name;
+    panel.classList.toggle('active', on);
+    panel.hidden = !on;
+  });
+}
+
 function renderGroupSplit(grandStake, grandMin, grandMax) {
   const section = $('groupResults');
   if (!groupMembers.length) {
     section.classList.add('hidden');
+    clearVizEl($('groupCharts'));
     return;
   }
   const pool = poolTotal();
@@ -809,22 +1162,31 @@ function renderGroupSplit(grandStake, grandMin, grandMax) {
   $('groupBody').innerHTML = groupMembers.map((m) => {
     const share = m.contribution / pool;
     const e = memberEarnings(share, m.contribution, grandMin, grandMax);
+    const col = {
+      name: t('memberName'),
+      contrib: t('contribution'),
+      sharePct: t('thStakePct'),
+      shareStake: t('shareOfStake'),
+      profit: t('profitEarned'),
+      profitRoi: t('thProfitRoi'),
+      payout: t('totalPayout'),
+    };
     return `<tr>
-      <td>${escapeHtml(m.name)}</td>
-      <td>${fmt(m.contribution)}</td>
-      <td>${pct(share)}</td>
-      <td>${fmt(grandStake * share)}</td>
-      <td>
+      <td data-label="${col.name}">${escapeHtml(m.name)}</td>
+      <td data-label="${col.contrib}">${fmt(m.contribution)}</td>
+      <td data-label="${col.sharePct}">${pct(share)}</td>
+      <td data-label="${col.shareStake}">${fmt(grandStake * share)}</td>
+      <td data-label="${col.profit}">
         <span class="positive">${fmt(e.bestProfit)}</span>
         <span class="earn-sep"> / </span>
         <span class="${e.worstProfit >= 0 ? 'positive' : 'negative'}">${fmt(e.worstProfit)}</span>
       </td>
-      <td>
+      <td data-label="${col.profitRoi}">
         <span class="positive">${pct(e.bestRoi)}</span>
         <span class="earn-sep"> / </span>
         <span class="${e.worstRoi >= 0 ? 'positive' : 'negative'}">${pct(e.worstRoi)}</span>
       </td>
-      <td>
+      <td data-label="${col.payout}">
         <span class="positive">${fmt(e.bestPayout)}</span>
         <span class="earn-sep"> / </span>
         <span class="${e.worstPayout >= m.contribution ? 'positive' : 'negative'}">${fmt(e.worstPayout)}</span>
@@ -853,6 +1215,7 @@ function renderGroupSplit(grandStake, grandMin, grandMax) {
     </div>`;
   }).join('');
 
+  renderGroupCharts(grandStake, grandMin, grandMax);
   section.classList.remove('hidden');
 }
 
@@ -863,6 +1226,9 @@ function resetAll() {
   $('combinedResults').classList.add('hidden');
   $('groupResults').classList.add('hidden');
   $('matchResults').innerHTML = '';
+  activeMatchResultTab = null;
+  clearVizEl($('combinedCharts'));
+  clearVizEl($('groupCharts'));
 }
 
 // ponytail: dutch self-check

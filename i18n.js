@@ -6,6 +6,9 @@ const I18N = {
     guideTitle: 'User Manual',
     closeGuide: 'Close guide',
     openGuide: 'Open user guide',
+    refBtn: 'Reference',
+    openRef: 'Open match reference',
+    closeRef: 'Close match reference',
     heroBadge: 'USA · CAN · MEX 2026',
     heroTitle: 'FIFA World Cup 2026<br>Bet Calculator',
     heroSub: 'Add multiple matches, enter stakes on each bet, and see combined profit with percentages.',
@@ -34,6 +37,8 @@ const I18N = {
     addScore: '+ Add score',
     remove: 'Remove',
     matchN: 'Match {n}:',
+    matchResultsTitle: 'Per-match Results',
+    matchTab: 'Match {n}',
     homeWin: '{team} Win',
     awayWin: '{team} Win',
     draw: 'Draw',
@@ -73,6 +78,17 @@ const I18N = {
     combinedBudgets: 'Combined budgets',
     bestTotalProfit: 'Best total profit',
     worstTotalProfit: 'Worst total profit',
+    chartStakeShare: 'Stake share by match',
+    chartProfitRange: 'Profit range by match',
+    chartTotalRange: 'Combined profit range',
+    chartBest: 'Best',
+    chartWorst: 'Worst',
+    chartLegend: 'Legend',
+    chartGroupShare: 'Pool share by member',
+    chartMemberProfit: 'Profit by member',
+    chartBetShare: 'Stake share by selection',
+    chartScenarioPL: 'Profit by outcome',
+    chartMatchRange: 'Match profit range',
     allMatches: 'All matches',
     groupPool: 'Group Pool',
     matchReference: 'Match Reference',
@@ -97,6 +113,9 @@ const I18N = {
     memberName: 'Name',
     contribution: 'Contribution ($)',
     groupSplit: 'Group Split',
+    groupTabCharts: 'Charts',
+    groupTabTable: 'Summary',
+    groupTabMembers: 'Members',
     shareOfStake: 'Share of stake',
     profitEarned: 'Profit (best / worst)',
     thProfitRoi: 'ROI (best / worst)',
@@ -122,7 +141,7 @@ const I18N = {
     removeMember: 'Remove member',
     guideHtml: `<section><h3>Quick start</h3><ol>
       <li>Add <strong>Group Pool</strong> members with name and contribution (optional).</li>
-      <li>Use <strong>Match Reference</strong> for fixtures and standings (server sync once daily).</li>
+      <li>Open <strong>Reference</strong> (top-right) for fixtures and standings (server sync once daily).</li>
       <li>Pick <strong>Home</strong> and <strong>Away</strong> teams for each match.</li>
       <li>Check outcomes (Win, Draw, Lose, or Correct Score).</li>
       <li>Enter <strong>Odds</strong> and <strong>Stake ($)</strong> on each line.</li>
@@ -165,6 +184,9 @@ const I18N = {
     guideTitle: '用户手册',
     closeGuide: '关闭指南',
     openGuide: '打开用户手册',
+    refBtn: '赛事参考',
+    openRef: '打开赛事参考',
+    closeRef: '关闭赛事参考',
     heroBadge: '美国 · 加拿大 · 墨西哥 2026',
     heroTitle: '2026 FIFA 世界杯<br>投注计算器',
     heroSub: '添加多场比赛，为每个选项输入投注金额，查看合并收益与百分比。',
@@ -193,6 +215,8 @@ const I18N = {
     addScore: '+ 添加比分',
     remove: '删除',
     matchN: '比赛 {n}：',
+    matchResultsTitle: '单场结果',
+    matchTab: '第{n}场',
     homeWin: '{team} 胜',
     awayWin: '{team} 胜',
     draw: '平局',
@@ -232,6 +256,17 @@ const I18N = {
     combinedBudgets: '合并预算',
     bestTotalProfit: '最佳总盈利',
     worstTotalProfit: '最差总盈利',
+    chartStakeShare: '各场投注占比',
+    chartProfitRange: '各场盈亏对比',
+    chartTotalRange: '合并盈亏区间',
+    chartBest: '最佳',
+    chartWorst: '最差',
+    chartLegend: '图例',
+    chartGroupShare: '成员资金占比',
+    chartMemberProfit: '成员盈亏对比',
+    chartBetShare: '各选项投注占比',
+    chartScenarioPL: '各结果盈亏',
+    chartMatchRange: '本场盈亏区间',
     allMatches: '全部比赛',
     groupPool: '合买群组',
     matchReference: '赛事参考',
@@ -256,6 +291,9 @@ const I18N = {
     memberName: '姓名',
     contribution: '出资 ($)',
     groupSplit: '合买分摊',
+    groupTabCharts: '图表',
+    groupTabTable: '汇总',
+    groupTabMembers: '成员',
     shareOfStake: '分摊投注',
     profitEarned: '盈利（最佳/最差）',
     thProfitRoi: 'ROI（最佳/最差）',
@@ -281,7 +319,7 @@ const I18N = {
     removeMember: '删除成员',
     guideHtml: `<section><h3>快速入门</h3><ol>
       <li>在<strong>合买群组</strong>添加成员姓名与出资（可选）。</li>
-      <li>使用<strong>赛事参考</strong>查看赛程与积分榜（服务器每天同步）。</li>
+      <li>点击右上角<strong>赛事参考</strong>查看赛程与积分榜（服务器每天同步）。</li>
       <li>为每场比赛选择<strong>主队</strong>与<strong>客队</strong>。</li>
       <li>勾选投注项（胜、平、负或波胆）。</li>
       <li>输入<strong>赔率</strong>与<strong>投注 ($)</strong>。</li>
