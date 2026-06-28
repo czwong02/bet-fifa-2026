@@ -181,10 +181,171 @@ body.guide-open { overflow: hidden; }
 .guide-body strong { color: var(--text); }
 
 .page {
-  max-width: 1024px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 2rem 1.25rem 3rem;
-  padding-top: 3.5rem; /* room for guide button */
+  padding-top: 3.5rem;
+}
+
+/* Restore app buttons over Bootstrap */
+.page .btn {
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem 1.25rem;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.15s;
+  line-height: 1.4;
+}
+
+.page .btn:active { transform: scale(0.98); }
+
+.page .btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+  color: #042a22;
+}
+
+.page .btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.page .btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.page .btn-sm {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.field-grow { flex: 1; min-width: 200px; }
+
+.ref-key-row { margin-bottom: 0.35rem; }
+
+.ref-widgets.hidden { display: none; }
+
+.ref-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1.35fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.ref-pane {
+  background: var(--surface2);
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius);
+  overflow: hidden;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ref-pane-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding: 0.55rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.ref-pane-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0.65rem 0.85rem;
+}
+
+.ref-pane-body.ref-scroll {
+  overflow-y: auto;
+  max-height: 65vh;
+  min-height: 280px;
+}
+
+.ref-meta { margin-bottom: 0.5rem; }
+
+.ref-league-info {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.ref-logo { border-radius: 8px; object-fit: contain; }
+
+.ref-fixture {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  width: 100%;
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.45rem;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.ref-fixture:hover { border-color: var(--accent); }
+
+.ref-fixture-date { font-size: 0.72rem; color: var(--muted); }
+
+.ref-fixture-teams { font-weight: 500; }
+
+.ref-score { color: var(--accent); margin: 0 0.25rem; }
+
+.ref-fixture-status {
+  font-size: 0.7rem;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+.ref-standings-group { margin-bottom: 1rem; }
+
+.ref-standings-group h4 {
+  font-size: 0.8rem;
+  margin: 0 0 0.4rem;
+  color: var(--muted);
+}
+
+.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.ref-table th,
+.ref-table td {
+  padding: 0.35rem 0.4rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.ref-table th { color: var(--muted); font-weight: 500; }
+
+.ref-error { color: var(--red); }
+
+@media (max-width: 992px) {
+  .ref-grid {
+    grid-template-columns: 1fr;
+  }
+  .ref-pane-body.ref-scroll {
+    max-height: 45vh;
+  }
 }
 
 .hero {

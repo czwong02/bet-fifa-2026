@@ -75,6 +75,22 @@ const I18N = {
     worstTotalProfit: 'Worst total profit',
     allMatches: 'All matches',
     groupPool: 'Group Pool',
+    matchReference: 'Match Reference',
+    refDesc: 'Fixtures and standings refresh every 15 minutes on the server. Click a match to fill teams in the calculator.',
+    refUpdated: 'Last updated: {time}',
+    refLoading: 'Loading reference data…',
+    refError: 'Reference data unavailable. Try again after deploy or cron sync.',
+    refNoFixtures: 'No fixtures loaded.',
+    refNoStandings: 'No standings loaded.',
+    refApplyTeams: 'Use teams in calculator',
+    refTeam: 'Team',
+    refPlayed: 'P',
+    refPoints: 'Pts',
+    refShow: 'Show reference',
+    refHide: 'Hide reference',
+    refLeagues: 'League',
+    refFixtures: 'Fixtures',
+    refStandings: 'Standings',
     groupDesc: 'Add people who share the bet. Stakes and profits are split by each member\'s contribution.',
     addMember: '+ Add member',
     addMemberBtn: 'Add',
@@ -106,6 +122,7 @@ const I18N = {
     removeMember: 'Remove member',
     guideHtml: `<section><h3>Quick start</h3><ol>
       <li>Add <strong>Group Pool</strong> members with name and contribution (optional).</li>
+      <li>Use <strong>Match Reference</strong> for fixtures and standings (server sync every 15 min).</li>
       <li>Pick <strong>Home</strong> and <strong>Away</strong> teams for each match.</li>
       <li>Check outcomes (Win, Draw, Lose, or Correct Score).</li>
       <li>Enter <strong>Odds</strong> and <strong>Stake ($)</strong> on each line.</li>
@@ -217,6 +234,22 @@ const I18N = {
     worstTotalProfit: '最差总盈利',
     allMatches: '全部比赛',
     groupPool: '合买群组',
+    matchReference: '赛事参考',
+    refDesc: '赛程与积分榜每 15 分钟在服务器自动更新。点击比赛可填入计算器球队。',
+    refUpdated: '最后更新：{time}',
+    refLoading: '加载参考数据…',
+    refError: '无法加载参考数据，请部署后或等待定时同步。',
+    refNoFixtures: '暂无赛程。',
+    refNoStandings: '暂无积分榜。',
+    refApplyTeams: '填入计算器球队',
+    refTeam: '球队',
+    refPlayed: '场',
+    refPoints: '分',
+    refShow: '显示参考',
+    refHide: '隐藏参考',
+    refLeagues: '联赛',
+    refFixtures: '赛程',
+    refStandings: '积分榜',
     groupDesc: '添加一起投注的成员。按各自出资比例分摊投注与盈亏。',
     addMember: '+ 添加成员',
     addMemberBtn: '添加',
@@ -248,6 +281,7 @@ const I18N = {
     removeMember: '删除成员',
     guideHtml: `<section><h3>快速入门</h3><ol>
       <li>在<strong>合买群组</strong>添加成员姓名与出资（可选）。</li>
+      <li>使用<strong>赛事参考</strong>查看赛程与积分榜（服务器每 15 分钟同步）。</li>
       <li>为每场比赛选择<strong>主队</strong>与<strong>客队</strong>。</li>
       <li>勾选投注项（胜、平、负或波胆）。</li>
       <li>输入<strong>赔率</strong>与<strong>投注 ($)</strong>。</li>
@@ -308,6 +342,7 @@ function setLang(lang) {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
   if (typeof window.onLangChange === 'function') window.onLangChange();
+  if (typeof window.onWidgetLangChange === 'function') window.onWidgetLangChange();
 }
 
 function applyStaticI18n() {

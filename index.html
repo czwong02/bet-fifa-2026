@@ -1,123 +1,150 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WC 2026 Bet Calculator</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
-  <div class="top-bar">
-    <div class="lang-switch" role="group" aria-label="Language">
-      <button type="button" class="lang-btn active" data-lang="en">EN</button>
-      <button type="button" class="lang-btn" data-lang="zh">中文</button>
-    </div>
-    <button type="button" class="guide-btn" id="openGuide" data-i18n-attr="aria-label:openGuide" data-i18n="guideBtn">Guide</button>
-  </div>
-
-  <div class="guide-overlay hidden" id="guideOverlay" aria-hidden="true">
-    <aside class="guide-panel" role="dialog" aria-labelledby="guideTitle">
-      <div class="guide-header">
-        <h2 id="guideTitle" data-i18n="guideTitle">User Manual</h2>
-        <button type="button" class="guide-close" id="closeGuide" data-i18n-attr="aria-label:closeGuide">×</button>
-      </div>
-      <div class="guide-body" id="guideBody"></div>
-    </aside>
-  </div>
-
-  <div class="page">
-    <header class="hero">
-      <div class="hero-badge" data-i18n="heroBadge">USA · CAN · MEX 2026</div>
-      <h1 data-i18n-html="heroTitle">FIFA World Cup 2026<br>Bet Calculator</h1>
-      <p class="hero-sub" data-i18n="heroSub">Add multiple matches, enter stakes on each bet, and see combined profit with percentages.</p>
-    </header>
-
-    <main class="grid">
-      <section class="card card-wide" id="groupSection">
-        <div class="toolbar-row">
-          <h2 data-i18n="groupPool">Group Pool</h2>
-          <button type="button" class="btn btn-secondary" id="addMember" data-i18n="addMember">+ Add member</button>
-        </div>
-        <p class="card-desc" data-i18n="groupDesc">Add people who share the bet. Stakes and profits are split by each member's contribution.</p>
-        <div class="group-add field-row">
-          <label class="field"><span data-i18n="memberName">Name</span><input type="text" id="memberName" maxlength="32" placeholder="Alex"></label>
-          <label class="field"><span data-i18n="contribution">Contribution ($)</span><input type="number" id="memberContrib" min="0.01" step="0.01" value="50"></label>
-          <button type="button" class="btn btn-secondary" id="saveMember" data-i18n="addMemberBtn">Add</button>
-        </div>
-        <div class="group-list" id="groupList"></div>
-        <div class="group-summary hidden" id="groupSummary"></div>
-        <div class="hidden" id="poolAllocSummary"></div>
-      </section>
-
-      <section class="card card-wide match-toolbar">
-        <div class="toolbar-row">
-          <h2 data-i18n="yourMatches">Your Matches</h2>
-          <button type="button" class="btn btn-secondary" id="addMatch" data-i18n="addMatch">+ Add match</button>
-        </div>
-        <p class="card-desc" data-i18n-html="toolbarDesc">Configure each match below. Use <strong>Calculate all</strong> to see per-match and combined totals.</p>
-      </section>
-
-      <div id="matchList" class="match-list"></div>
-
-      <section class="card card-wide actions">
-        <button type="button" class="btn btn-primary" id="calculate" data-i18n="calculateAll">Calculate all matches</button>
-        <button type="button" class="btn btn-ghost" id="reset" data-i18n="resetAll">Reset all</button>
-      </section>
-
-      <section class="card card-wide results hidden" id="combinedResults">
-        <h2 data-i18n="combinedTotals">Combined Totals</h2>
-        <div class="summary" id="combinedSummary"></div>
-        <div class="table-wrap">
-          <table class="stakes-table">
-            <thead>
-              <tr>
-                <th data-i18n="thMatch">Match</th>
-                <th data-i18n="thStaked">Staked</th>
-                <th data-i18n="thStakePct">Stake %</th>
-                <th data-i18n="thBestProfit">Best profit</th>
-                <th data-i18n="thBestRoi">Best ROI</th>
-                <th data-i18n="thWorstProfit">Worst profit</th>
-                <th data-i18n="thWorstRoi">Worst ROI</th>
-              </tr>
-            </thead>
-            <tbody id="combinedBody"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="card card-wide results hidden" id="groupResults">
-        <h2 data-i18n="groupSplit">Group Split</h2>
-        <div class="table-wrap">
-          <table class="stakes-table">
-            <thead>
-              <tr>
-                <th data-i18n="memberName">Name</th>
-                <th data-i18n="contribution">Contribution</th>
-                <th data-i18n="thStakePct">Share %</th>
-                <th data-i18n="shareOfStake">Share of stake</th>
-                <th data-i18n="profitEarned">Profit earned</th>
-                <th data-i18n="thProfitRoi">Profit ROI</th>
-                <th data-i18n="totalPayout">Total payout</th>
-              </tr>
-            </thead>
-            <tbody id="groupBody"></tbody>
-          </table>
-        </div>
-        <div class="group-earn-grid" id="groupEarnCards"></div>
-      </section>
-
-      <div id="matchResults"></div>
-    </main>
-
-    <footer class="footer">
-      <p data-i18n="footer">Educational tool only. Gamble responsibly. Odds are user-entered — verify with your bookmaker.</p>
-    </footer>
-  </div>
-  <script src="i18n.js"></script>
-  <script src="app.js"></script>
-</body>
-</html>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WC 2026 Bet Calculator</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="top-bar">
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" class="lang-btn active" data-lang="en">EN</button>
+      <button type="button" class="lang-btn" data-lang="zh">中文</button>
+    </div>
+    <button type="button" class="guide-btn" id="openGuide" data-i18n-attr="aria-label:openGuide" data-i18n="guideBtn">Guide</button>
+  </div>
+
+  <div class="guide-overlay hidden" id="guideOverlay" aria-hidden="true">
+    <aside class="guide-panel" role="dialog" aria-labelledby="guideTitle">
+      <div class="guide-header">
+        <h2 id="guideTitle" data-i18n="guideTitle">User Manual</h2>
+        <button type="button" class="guide-close" id="closeGuide" data-i18n-attr="aria-label:closeGuide">×</button>
+      </div>
+      <div class="guide-body" id="guideBody"></div>
+    </aside>
+  </div>
+
+  <div class="page">
+    <header class="hero">
+      <div class="hero-badge" data-i18n="heroBadge">USA · CAN · MEX 2026</div>
+      <h1 data-i18n-html="heroTitle">FIFA World Cup 2026<br>Bet Calculator</h1>
+      <p class="hero-sub" data-i18n="heroSub">Add multiple matches, enter stakes on each bet, and see combined profit with percentages.</p>
+    </header>
+
+    <main class="grid">
+      <section class="card card-wide" id="refSection">
+        <div class="toolbar-row">
+          <h2 data-i18n="matchReference">Match Reference</h2>
+          <button type="button" class="btn btn-secondary" id="toggleRef" data-i18n="refHide">Hide reference</button>
+        </div>
+        <p class="card-desc" data-i18n="refDesc">Fixtures and standings refresh every 15 minutes on the server. Click a match to fill teams in the calculator.</p>
+        <p class="hint ref-meta" id="refMeta"></p>
+        <div id="refWidgets" class="ref-widgets">
+          <div class="ref-grid">
+            <div class="ref-pane">
+              <div class="ref-pane-label" data-i18n="refLeagues">League</div>
+              <div class="ref-pane-body" id="refLeague"></div>
+            </div>
+            <div class="ref-pane">
+              <div class="ref-pane-label" data-i18n="refFixtures">Fixtures</div>
+              <div class="ref-pane-body ref-scroll" id="refFixtures"></div>
+            </div>
+            <div class="ref-pane">
+              <div class="ref-pane-label" data-i18n="refStandings">Standings</div>
+              <div class="ref-pane-body ref-scroll" id="refStandings"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card card-wide" id="groupSection">
+        <div class="toolbar-row">
+          <h2 data-i18n="groupPool">Group Pool</h2>
+          <button type="button" class="btn btn-secondary" id="addMember" data-i18n="addMember">+ Add member</button>
+        </div>
+        <p class="card-desc" data-i18n="groupDesc">Add people who share the bet. Stakes and profits are split by each member's contribution.</p>
+        <div class="group-add field-row">
+          <label class="field"><span data-i18n="memberName">Name</span><input type="text" id="memberName" maxlength="32" placeholder="Alex"></label>
+          <label class="field"><span data-i18n="contribution">Contribution ($)</span><input type="number" id="memberContrib" min="0.01" step="0.01" value="50"></label>
+          <button type="button" class="btn btn-secondary" id="saveMember" data-i18n="addMemberBtn">Add</button>
+        </div>
+        <div class="group-list" id="groupList"></div>
+        <div class="group-summary hidden" id="groupSummary"></div>
+        <div class="hidden" id="poolAllocSummary"></div>
+      </section>
+
+      <section class="card card-wide match-toolbar">
+        <div class="toolbar-row">
+          <h2 data-i18n="yourMatches">Your Matches</h2>
+          <button type="button" class="btn btn-secondary" id="addMatch" data-i18n="addMatch">+ Add match</button>
+        </div>
+        <p class="card-desc" data-i18n-html="toolbarDesc">Configure each match below. Use <strong>Calculate all</strong> to see per-match and combined totals.</p>
+      </section>
+
+      <div id="matchList" class="match-list"></div>
+
+      <section class="card card-wide actions">
+        <button type="button" class="btn btn-primary" id="calculate" data-i18n="calculateAll">Calculate all matches</button>
+        <button type="button" class="btn btn-ghost" id="reset" data-i18n="resetAll">Reset all</button>
+      </section>
+
+      <section class="card card-wide results hidden" id="combinedResults">
+        <h2 data-i18n="combinedTotals">Combined Totals</h2>
+        <div class="summary" id="combinedSummary"></div>
+        <div class="table-wrap">
+          <table class="stakes-table">
+            <thead>
+              <tr>
+                <th data-i18n="thMatch">Match</th>
+                <th data-i18n="thStaked">Staked</th>
+                <th data-i18n="thStakePct">Stake %</th>
+                <th data-i18n="thBestProfit">Best profit</th>
+                <th data-i18n="thBestRoi">Best ROI</th>
+                <th data-i18n="thWorstProfit">Worst profit</th>
+                <th data-i18n="thWorstRoi">Worst ROI</th>
+              </tr>
+            </thead>
+            <tbody id="combinedBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card card-wide results hidden" id="groupResults">
+        <h2 data-i18n="groupSplit">Group Split</h2>
+        <div class="table-wrap">
+          <table class="stakes-table">
+            <thead>
+              <tr>
+                <th data-i18n="memberName">Name</th>
+                <th data-i18n="contribution">Contribution</th>
+                <th data-i18n="thStakePct">Share %</th>
+                <th data-i18n="shareOfStake">Share of stake</th>
+                <th data-i18n="profitEarned">Profit earned</th>
+                <th data-i18n="thProfitRoi">Profit ROI</th>
+                <th data-i18n="totalPayout">Total payout</th>
+              </tr>
+            </thead>
+            <tbody id="groupBody"></tbody>
+          </table>
+        </div>
+        <div class="group-earn-grid" id="groupEarnCards"></div>
+      </section>
+
+      <div id="matchResults"></div>
+    </main>
+
+    <footer class="footer">
+      <p data-i18n="footer">Educational tool only. Gamble responsibly. Odds are user-entered — verify with your bookmaker.</p>
+    </footer>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="widgets.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+
