@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WC 2026 Bet Calculator</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="top-bar">
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" class="lang-btn active" data-lang="en">EN</button>
+      <button type="button" class="lang-btn" data-lang="zh">中文</button>
+    </div>
+    <button type="button" class="guide-btn" id="openGuide" data-i18n-attr="aria-label:openGuide" data-i18n="guideBtn">Guide</button>
+  </div>
+
+  <div class="guide-overlay hidden" id="guideOverlay" aria-hidden="true">
+    <aside class="guide-panel" role="dialog" aria-labelledby="guideTitle">
+      <div class="guide-header">
+        <h2 id="guideTitle" data-i18n="guideTitle">User Manual</h2>
+        <button type="button" class="guide-close" id="closeGuide" data-i18n-attr="aria-label:closeGuide">×</button>
+      </div>
+      <div class="guide-body" id="guideBody"></div>
+    </aside>
+  </div>
+
+  <div class="page">
+    <header class="hero">
+      <div class="hero-badge" data-i18n="heroBadge">USA · CAN · MEX 2026</div>
+      <h1 data-i18n-html="heroTitle">FIFA World Cup 2026<br>Bet Calculator</h1>
+      <p class="hero-sub" data-i18n="heroSub">Add multiple matches, enter stakes on each bet, and see combined profit with percentages.</p>
+    </header>
+
+    <main class="grid">
+      <section class="card card-wide match-toolbar">
+        <div class="toolbar-row">
+          <h2 data-i18n="yourMatches">Your Matches</h2>
+          <button type="button" class="btn btn-secondary" id="addMatch" data-i18n="addMatch">+ Add match</button>
+        </div>
+        <p class="card-desc" data-i18n-html="toolbarDesc">Configure each match below. Use <strong>Calculate all</strong> to see per-match and combined totals.</p>
+      </section>
+
+      <div id="matchList" class="match-list"></div>
+
+      <section class="card card-wide actions">
+        <button type="button" class="btn btn-primary" id="calculate" data-i18n="calculateAll">Calculate all matches</button>
+        <button type="button" class="btn btn-ghost" id="reset" data-i18n="resetAll">Reset all</button>
+      </section>
+
+      <section class="card card-wide results hidden" id="combinedResults">
+        <h2 data-i18n="combinedTotals">Combined Totals</h2>
+        <div class="summary" id="combinedSummary"></div>
+        <div class="table-wrap">
+          <table class="stakes-table">
+            <thead>
+              <tr>
+                <th data-i18n="thMatch">Match</th>
+                <th data-i18n="thStaked">Staked</th>
+                <th data-i18n="thStakePct">Stake %</th>
+                <th data-i18n="thBestProfit">Best profit</th>
+                <th data-i18n="thBestRoi">Best ROI</th>
+                <th data-i18n="thWorstProfit">Worst profit</th>
+                <th data-i18n="thWorstRoi">Worst ROI</th>
+              </tr>
+            </thead>
+            <tbody id="combinedBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div id="matchResults"></div>
+    </main>
+
+    <footer class="footer">
+      <p data-i18n="footer">Educational tool only. Gamble responsibly. Odds are user-entered — verify with your bookmaker.</p>
+    </footer>
+  </div>
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+
