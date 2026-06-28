@@ -94,6 +94,11 @@ const I18N = {
     profitLabel: 'Profit',
     totalPool: 'Total pool',
     members: 'Members',
+    poolAllocPct: 'Pool allocation %',
+    budgetFromPool: 'Budget (from pool)',
+    poolAllocHint: 'Budget = total pool × allocation %. All matches must sum to 100%.',
+    allocatedTotal: 'Pool allocated',
+    errAllocNot100: 'Allocations sum to {sum}% — must equal 100%.',
     errMemberName: 'Enter a member name.',
     errMemberContrib: 'Contribution must be greater than 0.',
     errPoolShort: 'Total staked {staked} exceeds group pool {pool} by {shortfall}.',
@@ -108,6 +113,7 @@ const I18N = {
     </ol></section>
     <section><h3>Group pool</h3>
       <p>Add friends who chip in together. Each person's <strong>share %</strong> = contribution ÷ total pool.</p>
+      <p>Set each match's <strong>pool allocation %</strong>. Match budget = total pool × that %. All matches must sum to 100%.</p>
       <p>After calculating, <strong>Group Split</strong> shows each member's portion of stake and profit.</p>
     </section>
     <section><h3>Multiple matches</h3>
@@ -230,6 +236,11 @@ const I18N = {
     profitLabel: '盈利',
     totalPool: '总资金池',
     members: '成员',
+    poolAllocPct: '资金池分配 %',
+    budgetFromPool: '预算（来自资金池）',
+    poolAllocHint: '预算 = 总资金池 × 分配 %。所有比赛分配须合计 100%。',
+    allocatedTotal: '已分配',
+    errAllocNot100: '分配合计 {sum}%，须等于 100%。',
     errMemberName: '请输入成员姓名。',
     errMemberContrib: '出资金额须大于 0。',
     errPoolShort: '总投注 {staked} 超出资金池 {pool}，差额 {shortfall}。',
@@ -244,6 +255,7 @@ const I18N = {
     </ol></section>
     <section><h3>合买群组</h3>
       <p>多人凑资一起投注。每人<strong>占比</strong> = 出资 ÷ 总资金池。</p>
+      <p>为每场比赛设置<strong>资金池分配 %</strong>。比赛预算 = 总资金池 × 该比例。所有比赛须合计 100%。</p>
       <p>计算后<strong>合买分摊</strong>显示每人承担的投注与盈亏份额。</p>
     </section>
     <section><h3>多场比赛</h3>

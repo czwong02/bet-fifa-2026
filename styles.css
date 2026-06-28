@@ -539,6 +539,41 @@ body.guide-open { overflow: hidden; }
 
 .group-summary.hidden { display: none; }
 
+.alloc-summary {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--surface2);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+
+.alloc-summary.alloc-warn {
+  border: 1px solid rgba(245, 197, 66, 0.4);
+  background: rgba(245, 197, 66, 0.08);
+}
+
+.alloc-warn-msg { color: var(--gold); font-size: 0.8rem; }
+
+.match-budget-computed {
+  display: block;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.pool-alloc-hint { margin-top: -0.25rem; }
+
+#poolAllocSummary.hidden { display: none; }
+
 #groupResults .alert { margin-bottom: 1rem; }
 
 .earn-sep { color: var(--muted); }

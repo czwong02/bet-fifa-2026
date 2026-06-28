@@ -20,7 +20,7 @@ const STRATEGY_HINTS = {
 };
 
 /** @typedef {{ id: string, home: number, away: number, odds: number, stake: number }} ScoreLine */
-/** @typedef {{ id: string, homeTeam: string, awayTeam: string, budget: number, strategy: string, scoreLines: ScoreLine[], outcomeSnap: object, collapsed: boolean }} MatchState */
+/** @typedef {{ id: string, homeTeam: string, awayTeam: string, budget: number, poolAllocPct: number, strategy: string, scoreLines: ScoreLine[], outcomeSnap: object, collapsed: boolean }} MatchState */
 
 /** @type {MatchState[]} */
 let matches = [];
@@ -61,6 +61,7 @@ function createMatch(homeIdx, awayIdx) {
     homeTeam: TEAMS[homeIdx] ?? TEAMS[0],
     awayTeam: TEAMS[awayIdx] ?? TEAMS[1],
     budget: 100,
+    poolAllocPct: 100,
     strategy: 'manual',
     scoreLines: [],
     outcomeSnap: {},
@@ -80,6 +81,7 @@ function bindEvents() {
 
   $('addMatch').addEventListener('click', () => {
     matches.push(createMatch(matches.length, matches.length + 1));
+    if (useGroupPool()) rebalancePoolAllocEqual();
     renderAll();
   });
   $('calculate').addEventListener('click', calculateAll);
@@ -95,6 +97,7 @@ function bindEvents() {
     if (rm) {
       groupMembers = groupMembers.filter((m) => m.id !== rm.dataset.rmMember);
       renderGroupList();
+      renderAll();
       $('groupResults').classList.add('hidden');
     }
   });
@@ -114,6 +117,7 @@ function bindEvents() {
     if (rm) {
       if (matches.length <= 1) return alert(t('errKeepOne'));
       matches = matches.filter((m) => m.id !== rm.dataset.removeMatch);
+      if (useGroupPool()) rebalancePoolAllocEqual();
       renderAll();
       $('combinedResults').classList.add('hidden');
       $('groupResults').classList.add('hidden');
@@ -142,7 +146,9 @@ function bindEvents() {
       m.awayTeam = e.target.value;
       updateMatchLabels(card, m);
     }
-    if (e.target.classList.contains('match-budget')) m.budget = parseFloat(e.target.value) || 0;
+    if (e.target.classList.contains('match-budget') && !useGroupPool()) {
+      m.budget = parseFloat(e.target.value) || 0;
+    }
     if (e.target.classList.contains('match-strategy')) {
       m.strategy = e.target.value;
       card.querySelector('.strategy-hint').textContent = STRATEGY_HINTS[m.strategy]?.() || '';
@@ -160,6 +166,12 @@ function bindEvents() {
     if (!card) return;
     const m = matches.find((x) => x.id === card.dataset.matchId);
     if (!m) return;
+    if (e.target.classList.contains('match-pool-alloc')) {
+      m.poolAllocPct = parseFloat(e.target.value) || 0;
+      updateMatchPoolBudget(card, m);
+      renderPoolAllocSummary();
+      return;
+    }
     const scoreId = e.target.dataset.scoreOdds || e.target.dataset.scoreStake;
     if (scoreId) {
       const line = m.scoreLines.find((s) => s.id === scoreId);
@@ -177,7 +189,52 @@ function addMember() {
   if (!contribution || contribution <= 0) return alert(t('errMemberContrib'));
   groupMembers.push({ id: `g-${Date.now()}`, name, contribution });
   $('memberName').value = '';
+  if (groupMembers.length === 1 || Math.abs(totalPoolAlloc() - 100) > 0.01) rebalancePoolAllocEqual();
   renderGroupList();
+  renderAll();
+}
+
+function useGroupPool() {
+  return poolTotal() > 0;
+}
+
+function totalPoolAlloc() {
+  return matches.reduce((s, m) => s + (m.poolAllocPct || 0), 0);
+}
+
+function matchBudget(m) {
+  if (useGroupPool()) return poolTotal() * (m.poolAllocPct || 0) / 100;
+  return m.budget;
+}
+
+function rebalancePoolAllocEqual() {
+  const n = matches.length;
+  if (n < 1) return;
+  const each = Math.floor((100 / n) * 100) / 100;
+  matches.forEach((m, i) => {
+    m.poolAllocPct = i === n - 1 ? +(100 - each * (n - 1)).toFixed(2) : each;
+  });
+}
+
+function updateMatchPoolBudget(card, m) {
+  const out = card.querySelector('.match-budget-computed');
+  if (out) out.textContent = fmt(matchBudget(m));
+}
+
+function renderPoolAllocSummary() {
+  const el = $('poolAllocSummary');
+  if (!el) return;
+  if (!useGroupPool()) {
+    el.classList.add('hidden');
+    return;
+  }
+  const sum = totalPoolAlloc();
+  const ok = Math.abs(sum - 100) < 0.01;
+  el.classList.remove('hidden');
+  el.innerHTML = `<div class="alloc-summary ${ok ? '' : 'alloc-warn'}">
+    <span>${t('allocatedTotal')}: <strong>${sum.toFixed(2)}%</strong> / 100%</span>
+    ${ok ? '' : `<span class="alloc-warn-msg">${t('errAllocNot100', { sum: sum.toFixed(2) })}</span>`}
+  </div>`;
 }
 
 function poolTotal() {
@@ -205,6 +262,7 @@ function renderGroupList() {
   summary.innerHTML = `
     <div class="stat"><div class="stat-label">${t('members')}</div><div class="stat-value">${groupMembers.length}</div></div>
     <div class="stat"><div class="stat-label">${t('totalPool')}</div><div class="stat-value">${fmt(pool)}</div></div>`;
+  renderPoolAllocSummary();
 }
 
 function escapeHtml(s) {
@@ -256,6 +314,10 @@ function renderAll() {
     if (card) {
       m.outcomeSnap = snapshotMatch(card);
       m.collapsed = card.classList.contains('collapsed');
+      const allocInp = card.querySelector('.match-pool-alloc');
+      if (allocInp) m.poolAllocPct = parseFloat(allocInp.value) || m.poolAllocPct;
+      const budgetInp = card.querySelector('.match-budget');
+      if (budgetInp && !useGroupPool()) m.budget = parseFloat(budgetInp.value) || m.budget;
     }
   });
 
@@ -267,7 +329,9 @@ function renderAll() {
     renderScoreList(card, m);
     card.querySelector('.strategy-hint').textContent = STRATEGY_HINTS[m.strategy]?.() || '';
     updateMatchLabels(card, m);
+    if (useGroupPool()) updateMatchPoolBudget(card, m);
   });
+  renderPoolAllocSummary();
 }
 
 function restoreSnap(card, snap) {
@@ -303,6 +367,38 @@ function matchCardHtml(m, index) {
   const collapsed = m.collapsed ? ' collapsed' : '';
   const expanded = !m.collapsed;
   const labels = matchOutcomeLabels(m);
+  const poolMode = useGroupPool();
+  const budgetRow = poolMode
+    ? `<div class="field-row">
+      <label class="field"><span>${t('poolAllocPct')}</span>
+        <input type="number" class="match-pool-alloc" min="0" max="100" step="0.01" value="${m.poolAllocPct ?? 0}">
+      </label>
+      <label class="field"><span>${t('budgetFromPool')}</span>
+        <output class="match-budget-computed">${fmt(matchBudget(m))}</output>
+      </label>
+      <label class="field"><span>${t('strategy')}</span>
+        <select class="match-strategy">
+          <option value="manual"${m.strategy === 'manual' ? ' selected' : ''}>${t('stratManual')}</option>
+          <option value="dutch"${m.strategy === 'dutch' ? ' selected' : ''}>${t('stratDutch')}</option>
+          <option value="target"${m.strategy === 'target' ? ' selected' : ''}>${t('stratTarget')}</option>
+          <option value="cover"${m.strategy === 'cover' ? ' selected' : ''}>${t('stratCover')}</option>
+          <option value="arbitrage"${m.strategy === 'arbitrage' ? ' selected' : ''}>${t('stratArbitrage')}</option>
+        </select>
+      </label>
+    </div>
+    <p class="hint pool-alloc-hint">${t('poolAllocHint')}</p>`
+    : `<div class="field-row">
+      <label class="field"><span>${t('budget')}</span><input type="number" class="match-budget" min="0" step="0.01" value="${m.budget}"></label>
+      <label class="field"><span>${t('strategy')}</span>
+        <select class="match-strategy">
+          <option value="manual"${m.strategy === 'manual' ? ' selected' : ''}>${t('stratManual')}</option>
+          <option value="dutch"${m.strategy === 'dutch' ? ' selected' : ''}>${t('stratDutch')}</option>
+          <option value="target"${m.strategy === 'target' ? ' selected' : ''}>${t('stratTarget')}</option>
+          <option value="cover"${m.strategy === 'cover' ? ' selected' : ''}>${t('stratCover')}</option>
+          <option value="arbitrage"${m.strategy === 'arbitrage' ? ' selected' : ''}>${t('stratArbitrage')}</option>
+        </select>
+      </label>
+    </div>`;
   return `<article class="card card-wide match-card${collapsed}" data-match-id="${m.id}">
     <div class="match-header">
       <button type="button" class="match-toggle" data-toggle-match="${m.id}" aria-expanded="${expanded}">
@@ -317,18 +413,7 @@ function matchCardHtml(m, index) {
       <span class="vs">vs</span>
       <label class="field"><span>${t('away')}</span><select class="match-away">${teamOptions(m.awayTeam)}</select></label>
     </div>
-    <div class="field-row">
-      <label class="field"><span>${t('budget')}</span><input type="number" class="match-budget" min="0" step="0.01" value="${m.budget}"></label>
-      <label class="field"><span>${t('strategy')}</span>
-        <select class="match-strategy">
-          <option value="manual"${m.strategy === 'manual' ? ' selected' : ''}>${t('stratManual')}</option>
-          <option value="dutch"${m.strategy === 'dutch' ? ' selected' : ''}>${t('stratDutch')}</option>
-          <option value="target"${m.strategy === 'target' ? ' selected' : ''}>${t('stratTarget')}</option>
-          <option value="cover"${m.strategy === 'cover' ? ' selected' : ''}>${t('stratCover')}</option>
-          <option value="arbitrage"${m.strategy === 'arbitrage' ? ' selected' : ''}>${t('stratArbitrage')}</option>
-        </select>
-      </label>
-    </div>
+    ${budgetRow}
     <p class="hint strategy-hint"></p>
 
     <h3 class="section-title">${t('matchResult')}</h3>
@@ -494,7 +579,12 @@ function stratLabel(key) {
 
 function resolveMatchBets(m, card) {
   m.outcomeSnap = snapshotMatch(card);
-  m.budget = parseFloat(card.querySelector('.match-budget')?.value) || m.budget;
+  const allocInp = card.querySelector('.match-pool-alloc');
+  if (allocInp) m.poolAllocPct = parseFloat(allocInp.value) || 0;
+  if (!useGroupPool()) {
+    m.budget = parseFloat(card.querySelector('.match-budget')?.value) || m.budget;
+  }
+  const budget = matchBudget(m);
   m.strategy = card.querySelector('.match-strategy')?.value || m.strategy;
   let bets = collectBets(card, m.homeTeam, m.awayTeam, m.scoreLines);
   const ctx = { home: m.homeTeam, away: m.awayTeam };
@@ -503,26 +593,26 @@ function resolveMatchBets(m, card) {
     bets = bets.filter((b) => b.stake > 0);
     if (!bets.length) return null;
   } else {
-    if (!m.budget || m.budget <= 0) return { error: t('errNeedBudget', ctx) };
+    if (!budget || budget <= 0) return { error: t('errNeedBudget', ctx) };
     if ((m.strategy === 'cover' || m.strategy === 'arbitrage') && bets.filter((b) => b.type === '1x2').length < 3) {
       return { error: t('errNeed1x2Cover', { ...ctx, strategy: stratLabel(m.strategy) }) };
     }
     if (m.strategy === 'target') {
       const primary = bets.find((b) => b.type === '1x2');
       if (!primary) return { error: t('errNeed1x2Target', ctx) };
-      bets = [{ ...primary, stake: m.budget }];
+      bets = [{ ...primary, stake: budget }];
     } else if (m.strategy === 'arbitrage') {
       const x2 = bets.filter((b) => b.type === '1x2');
       const arb = arbitrageStakes(
         x2.find((b) => b.key === 'home').odds,
         x2.find((b) => b.key === 'draw').odds,
         x2.find((b) => b.key === 'away').odds,
-        m.budget
+        budget
       );
       bets = x2.map((b, i) => ({ ...b, stake: arb.stakes[i] }));
     } else {
       if (!bets.length) return { error: t('errNeedBet', ctx) };
-      bets = dutchStakes(bets, m.budget);
+      bets = dutchStakes(bets, budget);
     }
     applyStakes(card, bets, m.scoreLines);
   }
@@ -530,6 +620,10 @@ function resolveMatchBets(m, card) {
 }
 
 function calculateAll() {
+  if (useGroupPool()) {
+    const sum = totalPoolAlloc();
+    if (Math.abs(sum - 100) > 0.01) return alert(t('errAllocNot100', { sum: sum.toFixed(2) }));
+  }
   const results = [];
   for (const m of matches) {
     const card = document.querySelector(`[data-match-id="${m.id}"]`);
@@ -560,7 +654,8 @@ function calculateAll() {
 function renderMatchResults(results) {
   $('matchResults').innerHTML = results.map((r) => {
     const { match: m, bets, totalStake, scenarios, minPL, maxPL } = r;
-    const budgetLeft = m.budget - totalStake;
+    const budget = matchBudget(m);
+    const budgetLeft = budget - totalStake;
     const invSum = bets.reduce((s, b) => s + 1 / b.odds, 0);
 
     const rows = bets.map((b) => {
@@ -593,7 +688,8 @@ function renderMatchResults(results) {
       <h2>${m.homeTeam} vs ${m.awayTeam}</h2>
       <div class="summary">
         <div class="stat"><div class="stat-label">${t('staked')}</div><div class="stat-value">${fmt(totalStake)}</div></div>
-        <div class="stat"><div class="stat-label">${t('budgetLeft')}</div><div class="stat-value ${budgetLeft >= 0 ? 'neutral' : 'negative'}">${m.budget > 0 ? fmt(budgetLeft) : '—'}</div></div>
+        <div class="stat"><div class="stat-label">${t('budgetLeft')}</div><div class="stat-value ${budgetLeft >= 0 ? 'neutral' : 'negative'}">${budget > 0 ? fmt(budgetLeft) : '—'}</div></div>
+        ${useGroupPool() ? `<div class="stat"><div class="stat-label">${t('poolAllocPct')}</div><div class="stat-value">${m.poolAllocPct.toFixed(2)}%</div></div>` : ''}
         <div class="stat"><div class="stat-label">${t('impliedSum')}</div><div class="stat-value">${pct(invSum)}</div></div>
         <div class="stat"><div class="stat-label">${t('scenarioPL')}</div><div class="stat-value ${minPL >= 0 ? 'positive' : 'negative'}">${fmt(minPL)} – ${fmt(maxPL)}</div></div>
         <div class="stat"><div class="stat-label">${t('scenarioRoi')}</div><div class="stat-value">${pct(roi(minPL, totalStake))} – ${pct(roi(maxPL, totalStake))}</div></div>
@@ -614,7 +710,9 @@ function renderCombinedResults(results) {
   const grandStake = results.reduce((s, r) => s + r.totalStake, 0);
   const grandMin = results.reduce((s, r) => s + r.minPL, 0);
   const grandMax = results.reduce((s, r) => s + r.maxPL, 0);
-  const grandBudget = results.reduce((s, r) => s + (r.match.budget || 0), 0);
+  const grandBudget = useGroupPool()
+    ? poolTotal()
+    : results.reduce((s, r) => s + matchBudget(r.match), 0);
 
   $('combinedSummary').innerHTML = `
     <div class="stat"><div class="stat-label">${t('matches')}</div><div class="stat-value">${results.length}</div></div>
