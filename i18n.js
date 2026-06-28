@@ -30,7 +30,6 @@ const I18N = {
     odds: 'Odds',
     stake: 'Stake ($)',
     matchResult: 'Match Result (1X2)',
-    doubleChance: 'Double Chance',
     correctScore: 'Correct Score',
     addScore: '+ Add score',
     remove: 'Remove',
@@ -38,9 +37,6 @@ const I18N = {
     homeWin: '{team} Win',
     awayWin: '{team} Win',
     draw: 'Draw',
-    winOrDraw: '{home} Win or Draw',
-    winOrLose: '{home} Win or {away} Win',
-    drawOrAway: 'Draw or {away} Win',
     scoreLine: 'Score {home}–{away}',
     stratManual: 'Manual',
     stratDutch: 'Dutch',
@@ -78,12 +74,42 @@ const I18N = {
     bestTotalProfit: 'Best total profit',
     worstTotalProfit: 'Worst total profit',
     allMatches: 'All matches',
+    groupPool: 'Group Pool',
+    groupDesc: 'Add people who share the bet. Stakes and profits are split by each member\'s contribution.',
+    addMember: '+ Add member',
+    addMemberBtn: 'Add',
+    memberName: 'Name',
+    contribution: 'Contribution ($)',
+    groupSplit: 'Group Split',
+    shareOfStake: 'Share of stake',
+    profitEarned: 'Profit (best / worst)',
+    thProfitRoi: 'ROI (best / worst)',
+    totalPayout: 'Payout (best / worst)',
+    bestProfitShare: 'Best profit',
+    worstProfitShare: 'Worst profit',
+    memberEarns: '{name} earns',
+    bestCase: 'Best case',
+    worstCase: 'Worst case',
+    receives: 'Receives',
+    profitLabel: 'Profit',
+    totalPool: 'Total pool',
+    members: 'Members',
+    errMemberName: 'Enter a member name.',
+    errMemberContrib: 'Contribution must be greater than 0.',
+    errPoolShort: 'Total staked {staked} exceeds group pool {pool} by {shortfall}.',
+    noMembers: 'No members yet — add people to split the bet.',
+    removeMember: 'Remove member',
     guideHtml: `<section><h3>Quick start</h3><ol>
+      <li>Add <strong>Group Pool</strong> members with name and contribution (optional).</li>
       <li>Pick <strong>Home</strong> and <strong>Away</strong> teams for each match.</li>
-      <li>Check outcomes (Win, Draw, Lose, Double Chance, or Correct Score).</li>
+      <li>Check outcomes (Win, Draw, Lose, or Correct Score).</li>
       <li>Enter <strong>Odds</strong> and <strong>Stake ($)</strong> on each line.</li>
-      <li>Click <strong>Calculate all matches</strong> to see profits and percentages.</li>
+      <li>Click <strong>Calculate all matches</strong> to see profits and group split.</li>
     </ol></section>
+    <section><h3>Group pool</h3>
+      <p>Add friends who chip in together. Each person's <strong>share %</strong> = contribution ÷ total pool.</p>
+      <p>After calculating, <strong>Group Split</strong> shows each member's portion of stake and profit.</p>
+    </section>
     <section><h3>Multiple matches</h3>
       <p>Click <strong>+ Add match</strong> for several games. <strong>Combined Totals</strong> sums stakes and profit.</p>
       <p>Click a match header to <strong>expand or collapse</strong> betting options.</p>
@@ -106,7 +132,7 @@ const I18N = {
     </section>
     <section><h3>Tips</h3><ul>
       <li>Verify odds with your bookmaker before betting.</li>
-      <li>Overlapping picks can pay more when multiple bets win.</li>
+      <li>Ensure group pool covers total stakes before placing bets.</li>
       <li>Budget is a reference in Manual mode.</li>
     </ul></section>`,
   },
@@ -140,7 +166,6 @@ const I18N = {
     odds: '赔率',
     stake: '投注 ($)',
     matchResult: '赛果 (1X2)',
-    doubleChance: '双重机会',
     correctScore: '波胆 / 正确比分',
     addScore: '+ 添加比分',
     remove: '删除',
@@ -148,9 +173,6 @@ const I18N = {
     homeWin: '{team} 胜',
     awayWin: '{team} 胜',
     draw: '平局',
-    winOrDraw: '{home} 胜或平',
-    winOrLose: '{home} 或 {away} 胜',
-    drawOrAway: '平或 {away} 胜',
     scoreLine: '比分 {home}–{away}',
     stratManual: '手动',
     stratDutch: '荷兰式',
@@ -188,12 +210,42 @@ const I18N = {
     bestTotalProfit: '最佳总盈利',
     worstTotalProfit: '最差总盈利',
     allMatches: '全部比赛',
+    groupPool: '合买群组',
+    groupDesc: '添加一起投注的成员。按各自出资比例分摊投注与盈亏。',
+    addMember: '+ 添加成员',
+    addMemberBtn: '添加',
+    memberName: '姓名',
+    contribution: '出资 ($)',
+    groupSplit: '合买分摊',
+    shareOfStake: '分摊投注',
+    profitEarned: '盈利（最佳/最差）',
+    thProfitRoi: 'ROI（最佳/最差）',
+    totalPayout: '到手（最佳/最差）',
+    bestProfitShare: '最佳盈利',
+    worstProfitShare: '最差盈利',
+    memberEarns: '{name} 收益',
+    bestCase: '最佳情况',
+    worstCase: '最差情况',
+    receives: '到手',
+    profitLabel: '盈利',
+    totalPool: '总资金池',
+    members: '成员',
+    errMemberName: '请输入成员姓名。',
+    errMemberContrib: '出资金额须大于 0。',
+    errPoolShort: '总投注 {staked} 超出资金池 {pool}，差额 {shortfall}。',
+    noMembers: '暂无成员 — 添加成员以分摊投注。',
+    removeMember: '删除成员',
     guideHtml: `<section><h3>快速入门</h3><ol>
+      <li>在<strong>合买群组</strong>添加成员姓名与出资（可选）。</li>
       <li>为每场比赛选择<strong>主队</strong>与<strong>客队</strong>。</li>
-      <li>勾选投注项（胜、平、负、双重机会或波胆）。</li>
+      <li>勾选投注项（胜、平、负或波胆）。</li>
       <li>输入<strong>赔率</strong>与<strong>投注 ($)</strong>。</li>
-      <li>点击<strong>计算全部比赛</strong>查看盈利与百分比。</li>
+      <li>点击<strong>计算全部比赛</strong>查看盈利与合买分摊。</li>
     </ol></section>
+    <section><h3>合买群组</h3>
+      <p>多人凑资一起投注。每人<strong>占比</strong> = 出资 ÷ 总资金池。</p>
+      <p>计算后<strong>合买分摊</strong>显示每人承担的投注与盈亏份额。</p>
+    </section>
     <section><h3>多场比赛</h3>
       <p>点击<strong>+ 添加比赛</strong>同时投注多场。<strong>合并总计</strong>汇总全部投注与盈利。</p>
       <p>点击比赛标题可<strong>展开或折叠</strong>投注选项。</p>
@@ -216,7 +268,7 @@ const I18N = {
     </section>
     <section><h3>提示</h3><ul>
       <li>下注前请与博彩公司核对赔率。</li>
-      <li>重叠选项（如主胜 + 胜/平）可能同时中奖，回报更高。</li>
+      <li>确保合买资金池覆盖总投注额。</li>
       <li>手动模式下预算仅供参考，超出会有提示。</li>
     </ul></section>`,
   },

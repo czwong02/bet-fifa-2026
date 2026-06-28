@@ -7,7 +7,9 @@ const TEAMS = [
   'Senegal', 'South Korea', 'Spain', 'Switzerland', 'USA', 'Uruguay',
 ];
 
-const DEFAULT_ODDS = { home: 2.10, draw: 3.40, away: 3.50, '1x': 1.35, '12': 1.28, x2: 1.72 };
+const DEFAULT_ODDS = { home: 2.10, draw: 3.40, away: 3.50 };
+
+/** @typedef {{ id: string, name: string, contribution: number }} GroupMember */
 
 const STRATEGY_HINTS = {
   manual: () => strategyHint('manual'),
@@ -23,6 +25,9 @@ const STRATEGY_HINTS = {
 /** @type {MatchState[]} */
 let matches = [];
 
+/** @type {GroupMember[]} */
+let groupMembers = [];
+
 const $ = (id) => document.getElementById(id);
 
 /** @type {Array<object>|null} */
@@ -34,11 +39,13 @@ function init() {
     btn.addEventListener('click', () => setLang(btn.dataset.lang));
     btn.classList.toggle('active', btn.dataset.lang === currentLang);
   });
+  renderGroupList();
   renderAll();
   bindEvents();
 }
 
 function onLangChange() {
+  renderGroupList();
   renderAll();
   if (lastResults) {
     renderMatchResults(lastResults);
@@ -78,6 +85,20 @@ function bindEvents() {
   $('calculate').addEventListener('click', calculateAll);
   $('reset').addEventListener('click', resetAll);
 
+  $('saveMember').addEventListener('click', addMember);
+  $('addMember').addEventListener('click', () => $('memberName').focus());
+  $('memberName').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addMember();
+  });
+  $('groupList').addEventListener('click', (e) => {
+    const rm = e.target.closest('[data-rm-member]');
+    if (rm) {
+      groupMembers = groupMembers.filter((m) => m.id !== rm.dataset.rmMember);
+      renderGroupList();
+      $('groupResults').classList.add('hidden');
+    }
+  });
+
   $('matchList').addEventListener('click', (e) => {
     const toggle = e.target.closest('[data-toggle-match]');
     if (toggle) {
@@ -95,6 +116,7 @@ function bindEvents() {
       matches = matches.filter((m) => m.id !== rm.dataset.removeMatch);
       renderAll();
       $('combinedResults').classList.add('hidden');
+      $('groupResults').classList.add('hidden');
       $('matchResults').innerHTML = '';
       return;
     }
@@ -148,6 +170,47 @@ function bindEvents() {
   });
 }
 
+function addMember() {
+  const name = $('memberName').value.trim();
+  const contribution = parseFloat($('memberContrib').value);
+  if (!name) return alert(t('errMemberName'));
+  if (!contribution || contribution <= 0) return alert(t('errMemberContrib'));
+  groupMembers.push({ id: `g-${Date.now()}`, name, contribution });
+  $('memberName').value = '';
+  renderGroupList();
+}
+
+function poolTotal() {
+  return groupMembers.reduce((s, m) => s + m.contribution, 0);
+}
+
+function renderGroupList() {
+  const el = $('groupList');
+  const summary = $('groupSummary');
+  if (!groupMembers.length) {
+    el.innerHTML = `<p class="hint group-empty">${t('noMembers')}</p>`;
+    summary.classList.add('hidden');
+    return;
+  }
+  const pool = poolTotal();
+  el.innerHTML = groupMembers.map((m) =>
+    `<div class="group-row">
+      <span class="group-name"><strong>${escapeHtml(m.name)}</strong></span>
+      <span class="group-contrib">${fmt(m.contribution)}</span>
+      <span class="group-pct">${pct(m.contribution / pool)}</span>
+      <button type="button" class="btn btn-ghost btn-sm" data-rm-member="${m.id}" aria-label="${t('removeMember')}">${t('remove')}</button>
+    </div>`
+  ).join('');
+  summary.classList.remove('hidden');
+  summary.innerHTML = `
+    <div class="stat"><div class="stat-label">${t('members')}</div><div class="stat-value">${groupMembers.length}</div></div>
+    <div class="stat"><div class="stat-label">${t('totalPool')}</div><div class="stat-value">${fmt(pool)}</div></div>`;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function openGuide(show) {
   $('guideOverlay').classList.toggle('hidden', !show);
   $('guideOverlay').setAttribute('aria-hidden', String(!show));
@@ -159,9 +222,6 @@ function matchOutcomeLabels(m) {
     'res-home': t('homeWin', { team: m.homeTeam }),
     'res-draw': t('draw'),
     'res-away': t('awayWin', { team: m.awayTeam }),
-    'dc-1x': t('winOrDraw', { home: m.homeTeam }),
-    'dc-12': t('winOrLose', { home: m.homeTeam, away: m.awayTeam }),
-    'dc-x2': t('drawOrAway', { away: m.awayTeam }),
   };
 }
 
@@ -279,14 +339,6 @@ function matchCardHtml(m, index) {
       ${outcomeRow('res-away', labels['res-away'], DEFAULT_ODDS.away, snap['res-away'])}
     </div>
 
-    <h3 class="section-title">${t('doubleChance')}</h3>
-    <div class="outcome-header"><span></span><span></span><span>${t('odds')}</span><span>${t('stake')}</span></div>
-    <div class="outcomes">
-      ${outcomeRow('dc-1x', labels['dc-1x'], DEFAULT_ODDS['1x'], snap['dc-1x'])}
-      ${outcomeRow('dc-12', labels['dc-12'], DEFAULT_ODDS['12'], snap['dc-12'])}
-      ${outcomeRow('dc-x2', labels['dc-x2'], DEFAULT_ODDS.x2, snap['dc-x2'])}
-    </div>
-
     <h3 class="section-title">${t('correctScore')}</h3>
     <div class="score-add">
       <label class="field field-sm"><span>${t('home')}</span><input type="number" class="score-home-inp" min="0" max="9" value="1"></label>
@@ -343,9 +395,6 @@ function collectBets(card, home, away, scoreLines) {
     'res-home': { type: '1x2', key: 'home', label: t('homeWin', { team: home }) },
     'res-draw': { type: '1x2', key: 'draw', label: t('draw') },
     'res-away': { type: '1x2', key: 'away', label: t('awayWin', { team: away }) },
-    'dc-1x': { type: 'double', key: '1x', label: t('winOrDraw', { home }) },
-    'dc-12': { type: 'double', key: '12', label: t('winOrLose', { home, away }) },
-    'dc-x2': { type: 'double', key: 'x2', label: t('drawOrAway', { away }) },
   };
   /** @type {Array<{id:string,label:string,type:string,key:string,odds:number,stake:number,active:boolean,home?:number,away?:number}>} */
   const bets = [];
@@ -405,11 +454,6 @@ function arbitrageStakes(homeOdds, drawOdds, awayOdds, budget) {
 function betWins(bet, result) {
   const { homeGoals, awayGoals, outcome } = result;
   if (bet.type === '1x2') return bet.key === outcome;
-  if (bet.type === 'double') {
-    if (bet.key === '1x') return outcome === 'home' || outcome === 'draw';
-    if (bet.key === '12') return outcome === 'home' || outcome === 'away';
-    if (bet.key === 'x2') return outcome === 'draw' || outcome === 'away';
-  }
   if (bet.type === 'score') return homeGoals === bet.home && awayGoals === bet.away;
   return false;
 }
@@ -603,7 +647,90 @@ function renderCombinedResults(results) {
   </tr>`;
 
   $('combinedResults').classList.remove('hidden');
+  renderGroupSplit(grandStake, grandMin, grandMax);
   $('combinedResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function memberEarnings(share, contribution, grandMin, grandMax) {
+  const bestProfit = grandMax * share;
+  const worstProfit = grandMin * share;
+  return {
+    bestProfit,
+    worstProfit,
+    bestRoi: contribution > 0 ? bestProfit / contribution : 0,
+    worstRoi: contribution > 0 ? worstProfit / contribution : 0,
+    bestPayout: contribution + bestProfit,
+    worstPayout: contribution + worstProfit,
+  };
+}
+
+function renderGroupSplit(grandStake, grandMin, grandMax) {
+  const section = $('groupResults');
+  if (!groupMembers.length) {
+    section.classList.add('hidden');
+    return;
+  }
+  const pool = poolTotal();
+  section.querySelector('.group-alert')?.remove();
+  if (grandStake > pool) {
+    const div = document.createElement('div');
+    div.className = 'alert alert-warn group-alert';
+    div.textContent = t('errPoolShort', {
+      staked: fmt(grandStake),
+      pool: fmt(pool),
+      shortfall: fmt(grandStake - pool),
+    });
+    section.querySelector('h2')?.after(div);
+  }
+
+  $('groupBody').innerHTML = groupMembers.map((m) => {
+    const share = m.contribution / pool;
+    const e = memberEarnings(share, m.contribution, grandMin, grandMax);
+    return `<tr>
+      <td>${escapeHtml(m.name)}</td>
+      <td>${fmt(m.contribution)}</td>
+      <td>${pct(share)}</td>
+      <td>${fmt(grandStake * share)}</td>
+      <td>
+        <span class="positive">${fmt(e.bestProfit)}</span>
+        <span class="earn-sep"> / </span>
+        <span class="${e.worstProfit >= 0 ? 'positive' : 'negative'}">${fmt(e.worstProfit)}</span>
+      </td>
+      <td>
+        <span class="positive">${pct(e.bestRoi)}</span>
+        <span class="earn-sep"> / </span>
+        <span class="${e.worstRoi >= 0 ? 'positive' : 'negative'}">${pct(e.worstRoi)}</span>
+      </td>
+      <td>
+        <span class="positive">${fmt(e.bestPayout)}</span>
+        <span class="earn-sep"> / </span>
+        <span class="${e.worstPayout >= m.contribution ? 'positive' : 'negative'}">${fmt(e.worstPayout)}</span>
+      </td>
+    </tr>`;
+  }).join('');
+
+  $('groupEarnCards').innerHTML = groupMembers.map((m) => {
+    const share = m.contribution / pool;
+    const e = memberEarnings(share, m.contribution, grandMin, grandMax);
+    return `<div class="member-earn-card">
+      <h3>${t('memberEarns', { name: escapeHtml(m.name) })}</h3>
+      <p class="member-contrib">${t('contribution')}: <strong>${fmt(m.contribution)}</strong> · ${t('thStakePct')} <strong>${pct(share)}</strong></p>
+      <div class="earn-cases">
+        <div class="earn-case earn-best">
+          <span class="earn-case-label">${t('bestCase')}</span>
+          <p>${t('profitLabel')}: <strong class="positive">${fmt(e.bestProfit)} (${pct(e.bestRoi)})</strong></p>
+          <p>${t('receives')}: <strong class="positive">${fmt(e.bestPayout)}</strong></p>
+        </div>
+        <div class="earn-case earn-worst">
+          <span class="earn-case-label">${t('worstCase')}</span>
+          <p>${t('profitLabel')}: <strong class="${e.worstProfit >= 0 ? 'positive' : 'negative'}">${fmt(e.worstProfit)} (${pct(e.worstRoi)})</strong></p>
+          <p>${t('receives')}: <strong class="${e.worstPayout >= m.contribution ? 'positive' : 'negative'}">${fmt(e.worstPayout)}</strong></p>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  section.classList.remove('hidden');
 }
 
 function resetAll() {
@@ -611,6 +738,7 @@ function resetAll() {
   lastResults = null;
   renderAll();
   $('combinedResults').classList.add('hidden');
+  $('groupResults').classList.add('hidden');
   $('matchResults').innerHTML = '';
 }
 
