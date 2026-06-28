@@ -289,10 +289,23 @@ function updateMatchLabels(card, m) {
     if (lbl) lbl.textContent = text;
   }
   const title = card.querySelector('.match-title');
-  if (title) title.textContent = `${m.homeTeam} vs ${m.awayTeam}`;
+  if (title) title.innerHTML = typeof teamVsHtml === 'function' ? teamVsHtml(m.homeTeam, m.awayTeam) : `${m.homeTeam} vs ${m.awayTeam}`;
+  const homeFlag = card.querySelector('[data-flag-for="home"]');
+  const awayFlag = card.querySelector('[data-flag-for="away"]');
+  if (homeFlag && typeof flagUrlForTeam === 'function') homeFlag.src = flagUrlForTeam(m.homeTeam);
+  if (awayFlag && typeof flagUrlForTeam === 'function') awayFlag.src = flagUrlForTeam(m.awayTeam);
   const prefix = card.querySelector('.match-prefix');
   if (prefix) prefix.textContent = t('matchN', { n: matches.indexOf(m) + 1 });
 }
+
+function refreshTeamFlags() {
+  document.querySelectorAll('.match-card[data-match-id]').forEach((card) => {
+    const m = matches.find((x) => x.id === card.dataset.matchId);
+    if (m) updateMatchLabels(card, m);
+  });
+}
+
+window.refreshTeamFlags = refreshTeamFlags;
 
 function snapshotMatch(card) {
   const snap = {};
@@ -403,15 +416,25 @@ function matchCardHtml(m, index) {
     <div class="match-header">
       <button type="button" class="match-toggle" data-toggle-match="${m.id}" aria-expanded="${expanded}">
         <span class="chevron" aria-hidden="true"></span>
-        <span class="match-toggle-text"><span class="match-prefix">${t('matchN', { n: index + 1 })}</span> <span class="match-title">${m.homeTeam} vs ${m.awayTeam}</span></span>
+        <span class="match-toggle-text"><span class="match-prefix">${t('matchN', { n: index + 1 })}</span> <span class="match-title">${typeof teamVsHtml === 'function' ? teamVsHtml(m.homeTeam, m.awayTeam) : `${m.homeTeam} vs ${m.awayTeam}`}</span></span>
       </button>
       ${matches.length > 1 ? `<button type="button" class="btn btn-ghost btn-sm" data-remove-match="${m.id}">${t('remove')}</button>` : ''}
     </div>
     <div class="match-body">
-    <div class="field-row">
-      <label class="field"><span>${t('home')}</span><select class="match-home">${teamOptions(m.homeTeam)}</select></label>
+    <div class="field-row team-select-row">
+      <label class="field team-field"><span>${t('home')}</span>
+        <div class="team-select-wrap">
+          <img class="team-flag" data-flag-for="home" src="${typeof flagUrlForTeam === 'function' ? flagUrlForTeam(m.homeTeam) : ''}" alt="" width="24" height="18">
+          <select class="match-home">${teamOptions(m.homeTeam)}</select>
+        </div>
+      </label>
       <span class="vs">vs</span>
-      <label class="field"><span>${t('away')}</span><select class="match-away">${teamOptions(m.awayTeam)}</select></label>
+      <label class="field team-field"><span>${t('away')}</span>
+        <div class="team-select-wrap">
+          <img class="team-flag" data-flag-for="away" src="${typeof flagUrlForTeam === 'function' ? flagUrlForTeam(m.awayTeam) : ''}" alt="" width="24" height="18">
+          <select class="match-away">${teamOptions(m.awayTeam)}</select>
+        </div>
+      </label>
     </div>
     ${budgetRow}
     <p class="hint strategy-hint"></p>
@@ -685,7 +708,7 @@ function renderMatchResults(results) {
     ).join('');
 
     return `<section class="card card-wide results">
-      <h2>${m.homeTeam} vs ${m.awayTeam}</h2>
+      <h2 class="match-result-title">${typeof teamVsHtml === 'function' ? teamVsHtml(m.homeTeam, m.awayTeam) : `${escapeHtml(m.homeTeam)} vs ${escapeHtml(m.awayTeam)}`}</h2>
       <div class="summary">
         <div class="stat"><div class="stat-label">${t('staked')}</div><div class="stat-value">${fmt(totalStake)}</div></div>
         <div class="stat"><div class="stat-label">${t('budgetLeft')}</div><div class="stat-value ${budgetLeft >= 0 ? 'neutral' : 'negative'}">${budget > 0 ? fmt(budgetLeft) : '—'}</div></div>
@@ -724,7 +747,9 @@ function renderCombinedResults(results) {
 
   $('combinedBody').innerHTML = results.map((r) => {
     const stakePct = grandStake > 0 ? r.totalStake / grandStake : 0;
-    const title = `${r.match.homeTeam} vs ${r.match.awayTeam}`;
+    const title = typeof teamVsHtml === 'function'
+      ? teamVsHtml(r.match.homeTeam, r.match.awayTeam)
+      : `${escapeHtml(r.match.homeTeam)} vs ${escapeHtml(r.match.awayTeam)}`;
     return `<tr>
       <td>${title}</td>
       <td>${fmt(r.totalStake)}</td>

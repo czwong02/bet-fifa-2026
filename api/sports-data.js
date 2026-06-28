@@ -7,7 +7,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const data = await getSportsData();
-    res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=60');
+    res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=3600');
     return res.status(200).json(data);
   } catch (err) {
     console.error('sports-data failed:', err);

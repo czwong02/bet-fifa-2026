@@ -76,7 +76,7 @@ const I18N = {
     allMatches: 'All matches',
     groupPool: 'Group Pool',
     matchReference: 'Match Reference',
-    refDesc: 'Fixtures and standings refresh every 15 minutes on the server. Click a match to fill teams in the calculator.',
+    refDesc: 'Fixtures and standings refresh once daily on the server. Click a match to fill teams in the calculator.',
     refUpdated: 'Last updated: {time}',
     refLoading: 'Loading reference data…',
     refError: 'Reference data unavailable. Try again after deploy or cron sync.',
@@ -122,7 +122,7 @@ const I18N = {
     removeMember: 'Remove member',
     guideHtml: `<section><h3>Quick start</h3><ol>
       <li>Add <strong>Group Pool</strong> members with name and contribution (optional).</li>
-      <li>Use <strong>Match Reference</strong> for fixtures and standings (server sync every 15 min).</li>
+      <li>Use <strong>Match Reference</strong> for fixtures and standings (server sync once daily).</li>
       <li>Pick <strong>Home</strong> and <strong>Away</strong> teams for each match.</li>
       <li>Check outcomes (Win, Draw, Lose, or Correct Score).</li>
       <li>Enter <strong>Odds</strong> and <strong>Stake ($)</strong> on each line.</li>
@@ -235,7 +235,7 @@ const I18N = {
     allMatches: '全部比赛',
     groupPool: '合买群组',
     matchReference: '赛事参考',
-    refDesc: '赛程与积分榜每 15 分钟在服务器自动更新。点击比赛可填入计算器球队。',
+    refDesc: '赛程与积分榜每天在服务器自动更新。点击比赛可填入计算器球队。',
     refUpdated: '最后更新：{time}',
     refLoading: '加载参考数据…',
     refError: '无法加载参考数据，请部署后或等待定时同步。',
@@ -281,7 +281,7 @@ const I18N = {
     removeMember: '删除成员',
     guideHtml: `<section><h3>快速入门</h3><ol>
       <li>在<strong>合买群组</strong>添加成员姓名与出资（可选）。</li>
-      <li>使用<strong>赛事参考</strong>查看赛程与积分榜（服务器每 15 分钟同步）。</li>
+      <li>使用<strong>赛事参考</strong>查看赛程与积分榜（服务器每天同步）。</li>
       <li>为每场比赛选择<strong>主队</strong>与<strong>客队</strong>。</li>
       <li>勾选投注项（胜、平、负或波胆）。</li>
       <li>输入<strong>赔率</strong>与<strong>投注 ($)</strong>。</li>

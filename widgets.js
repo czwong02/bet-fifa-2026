@@ -45,6 +45,9 @@ async function loadReferenceData() {
       metaEl.textContent = typeof t === 'function' ? t('refUpdated', { time: when }) : `Updated ${when}`;
     }
 
+    mergeTeamLogosFromApi(data.fixtures, data.standings);
+    if (typeof window.refreshTeamFlags === 'function') window.refreshTeamFlags();
+
     renderLeague(leagueEl, data.league);
     renderFixtures(fixturesEl, data.fixtures);
     renderStandings(standingsEl, data.standings);
@@ -90,7 +93,11 @@ function renderFixtures(el, fixtures) {
     const status = f.fixture.status.short;
     return `<button type="button" class="ref-fixture" data-home="${escapeAttr(home)}" data-away="${escapeAttr(away)}" title="${typeof t === 'function' ? t('refApplyTeams') : 'Use teams in calculator'}">
       <span class="ref-fixture-date">${date}</span>
-      <span class="ref-fixture-teams">${escapeHtml(home)} <span class="ref-score">${score}</span> ${escapeHtml(away)}</span>
+      <span class="ref-fixture-teams">
+        <span class="ref-team">${teamFlagImg(home, 'team-flag team-flag-sm')}${escapeHtml(home)}</span>
+        <span class="ref-score">${score}</span>
+        <span class="ref-team">${teamFlagImg(away, 'team-flag team-flag-sm')}${escapeHtml(away)}</span>
+      </span>
       <span class="ref-fixture-status">${escapeHtml(status)}</span>
     </button>`;
   }).join('');
@@ -110,7 +117,7 @@ function renderStandings(el, leagueStandings) {
     const rows = group.map((row) =>
       `<tr>
         <td>${row.rank}</td>
-        <td>${escapeHtml(row.team.name)}</td>
+        <td><span class="ref-team">${teamFlagImg(row.team.name, 'team-flag team-flag-sm')}${escapeHtml(row.team.name)}</span></td>
         <td>${row.all.played}</td>
         <td>${row.all.win}-${row.all.draw}-${row.all.lose}</td>
         <td>${row.all.goals.for}:${row.all.goals.against}</td>
@@ -136,8 +143,11 @@ function applyTeamsToFirstMatch(home, away) {
   if (!home || !away || typeof matches === 'undefined') return;
   const m = matches[0];
   if (!m) return;
-  if (TEAMS.includes(home)) m.homeTeam = home;
-  if (TEAMS.includes(away)) m.awayTeam = away;
+  const canon = typeof canonicalTeam === 'function' ? canonicalTeam : (n) => n;
+  const h = canon(home);
+  const a = canon(away);
+  if (TEAMS.includes(h)) m.homeTeam = h;
+  if (TEAMS.includes(a)) m.awayTeam = a;
   renderAll();
   document.getElementById('matchList')?.scrollIntoView({ behavior: 'smooth' });
 }
